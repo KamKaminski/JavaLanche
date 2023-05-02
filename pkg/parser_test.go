@@ -7,8 +7,12 @@ func TestParser(t *testing.T) {
 		expr   string // string to evaluate
 		result Value  // expected Value. nil if we expect an error
 	}{
+		{"true + true == 2", NewInteger(2)},
 		{"1 + 1", NewInteger(2)},
+		{"3 != 3", NewBoolean(false)},
+		{"0.5 + 0.1 == 0.6", NewBoolean(true)},	
 		{"\"\"", NewString("")},
+		{"1.5 + 3.5", NewFloat(5.00)},
 		{"\"hello\" + \"world\"", NewString("helloworld")},
 		{"let x = 5\nx * 2", NewInteger(10)},
 		{"true == false", NewBoolean(false)},
@@ -22,6 +26,7 @@ func TestParser(t *testing.T) {
 		{"\"foo\" + \"bar\"", NewString("foobar")},
 		{"\"10 corgis\" != \"10\" +\"corgis\" ", NewBoolean(true)},
 		{"let quickMaths = 9 + 10", NewInteger(19)},
+		{"quickMaths == 19", NewBoolean(true)},
 	}
 
 	for _, tc := range cases {

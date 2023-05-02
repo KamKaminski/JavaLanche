@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	javalanche "javalanche/pkg"
 )
 
 func main() {
@@ -20,6 +22,10 @@ func main() {
 
 	for scanner.Scan() {
 		inputs = append(inputs, scanner.Text())
+		if err := scanner.Err(); err != nil {
+			fmt.Printf("Error reading file: %s\n", err)
+			return
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -30,8 +36,9 @@ func main() {
 	for i, input := range inputs {
 		fmt.Printf("Test case #%d: %s\n", i+1, input)
 		reader := strings.NewReader(input)
-		tokenizer := NewTokenizer(reader)
-		parser := NewParser(tokenizer)
+		tokenizer := javalanche.NewTokenizer(reader)
+		evaluator := javalanche.NewEvaluator()
+		parser := javalanche.NewParser(tokenizer, evaluator)
 		node, err := parser.Parse()
 
 		if err != nil {
@@ -45,9 +52,12 @@ func main() {
 			continue
 		}
 
-		if result.Type() == ValueTypeBool {
+		switch result.Type() {
+		case javalanche.ValueTypeBool:
 			fmt.Printf("Result: %t\n", result.AsBool())
-		} else {
+		case javalanche.ValueTypeString:
+			fmt.Printf("Result: %s\n", result.AsString())
+		default:
 			if float64(int(result.AsFloat64())) == result.AsFloat64() {
 				fmt.Printf("Result: %d\n", int(result.AsFloat64()))
 			} else {

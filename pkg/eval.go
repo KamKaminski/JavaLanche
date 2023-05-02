@@ -5,14 +5,21 @@ import (
 	"strings"
 )
 
+type Evaluator struct {
+}
+
+func NewEvaluator() *Evaluator {
+	return &Evaluator{}
+}
+
 func EvalString(expr string) (Value, error) {
 	if expr == "" {
 		return nil, errors.New("empty string received")
 	}
 	// Since Tokenizer implements idea of I/O we need to turn our input into the reader
 	reader := strings.NewReader(expr)
-	lexer := NewTokenizer(reader)
 	evaluator := NewEvaluator()
+	lexer := NewTokenizer(reader)
 	parser := NewParser(lexer, evaluator)
 
 	ast, err := parser.Parse()

@@ -192,24 +192,6 @@ func (p *Parser) parsePrimary() (Node, error) {
 		return factor, nil
 	}
 
-	if p.current.Type == Keyword && p.current.Value == "let" {
-		p.nextToken()
-		if p.current.Type != Identifier {
-			return nil, fmt.Errorf("expected identifier after 'let'")
-		}
-		identifier := p.current.Value
-		p.nextToken()
-		if p.current.Value != "=" {
-			return nil, fmt.Errorf("expected '=' after identifier in variable assignment")
-		}
-		p.nextToken()
-		value, err := p.parseExpression()
-		if err != nil {
-			return nil, err
-		}
-		return &VariableAssignment{Name: identifier, Value: value, Evaluator: p.evaluator}, nil // Pass the Evaluator here
-	}
-
 	if p.current.Type == Keyword && (p.current.Value == "true" || p.current.Value == "false") {
 		value := p.current.Value == "true"
 		p.nextToken()
@@ -229,13 +211,6 @@ func (p *Parser) parsePrimary() (Node, error) {
 		}
 		p.nextToken()
 		return &FloatLiteral{Value: floatVal}, nil
-	}
-
-	// Reference to the variable?
-	if p.current.Type == Identifier {
-		name := p.current.Value
-		p.nextToken()
-		return &VariableReference{Name: name, Evaluator: p.evaluator}, nil
 	}
 
 	if p.current.Type == LeftParen {
