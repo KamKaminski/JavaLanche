@@ -3,7 +3,6 @@ package javalanche
 import (
 	"fmt"
 	"log"
-	"math"
 )
 
 var (
@@ -39,130 +38,64 @@ func (n *BinaryExpression) Eval() (Value, error) {
 		return nil, err
 	}
 
-	switch leftVal.Type() {
-	case ValueTypeBool:
-		return evalBinaryBool(n.Op, leftVal.AsBool(), rightVal)
-	case ValueTypeString:
-		return evalBinaryString(n.Op, leftVal.AsString(), rightVal)
-	case ValueTypeFloat, ValueTypeInt:
-		return evalBinaryFloat(n.Op, leftVal.AsFloat64(), rightVal)
-	default:
-		return evalBinaryFloat(n.Op, leftVal.AsFloat64(), rightVal)
-	}
-}
-
-func evalBinaryBool(op string, left bool, rightVal Value) (Value, error) {
-	var right, result bool
-
-	switch {
-	case rightVal.Type() == ValueTypeBool:
-		right = rightVal.AsBool()
-	case op == "==", op == "!=":
-		return &BooleanLiteral{Value: false}, nil
-	default:
-		return nil, errInvalidTypes
-	}
-
-	switch op {
+	switch n.Op {
+	case "==":
+		eq := leftVal.Equal(rightVal)
+		return NewBoolean(eq), nil
+	case "!=":
+		eq := leftVal.Equal(rightVal)
+		return NewBoolean(!eq), nil
 	case "&&", "and":
-		// AND
-		result = left && right
+		// left.AndValue(right)
+		// left is of type AndValuer,
+		//we can only use it if the cast succeeded (ok)
+		if left, ok := leftVal.(AndValuer); ok {
+			return left.AndValue(rightVal)
+		}
 	case "||", "or":
-		// OR
-		result = left || right
-	case "==":
-		// EQ
-		result = left == right
-	case "!=":
-		// NE
-		result = left != right
-	case "^":
-		// XOR
-		result = (left && !right) || (!left && right)
-	default:
-		return nil, errInvalidOp
-	}
-
-	return &BooleanLiteral{Value: result}, nil
-}
-
-func evalBinaryFloat(op string, left float64, rightVal Value) (Value, error) {
-	var right, result float64
-
-	switch rightVal.Type() {
-	case ValueTypeFloat, ValueTypeInt:
-		right = rightVal.AsFloat64()
-	default:
-		switch op {
-		case "==", "!=":
-			return &BooleanLiteral{Value: false}, nil
-		default:
-			return nil, errInvalidTypes
+		// left.OrValue(right)
+		if left, ok := leftVal.(OrValuer); ok {
+			return left.OrValue(rightVal)
 		}
-	}
-
-	switch op {
+	case "^":
+		// left.UpValue(right)
+		if left, ok := leftVal.(UpValuer); ok {
+			return left.UpValue(rightVal)
+		}
 	case "+":
-		result = left + right
+		if left, ok := leftVal.(AddValuer); ok {
+			return left.AddValue(rightVal)
+		}
 	case "-":
-		result = left - right
-	case "*":
-		result = left * right
-	case "/":
-		if right == 0 {
-			return nil, errDivZero
+		if left, ok := leftVal.(SubValuer); ok {
+			return left.SubValue(rightVal)
 		}
-		result = left / right
-	case "^":
-		result = math.Pow(left, right)
-	default:
-		// boolean result
-		return evalBinaryFloatComp(op, left, right)
-	}
-
-	return &FloatLiteral{Value: result}, nil
-}
-
-func evalBinaryFloatComp(op string, left, right float64) (Value, error) {
-	var result bool
-
-	switch op {
-	case "==":
-		// EQ
-		result = left == right
-	case "!=":
-		// NE
-		result = left != right
-	case "<":
-		// LT
-		result = (left < right)
-	case "<=":
-		// LE
-		result = (left <= right)
+	case "/":
+		if left, ok := leftVal.(DivValuer); ok {
+			return left.DivValue(rightVal)
+		}
+	case "*":
+		if left, ok := leftVal.(MulValuer); ok {
+			return left.MulValue(rightVal)
+		}
 	case ">":
-		result = (left > right)
+		if left, ok := leftVal.(GreaterValuer); ok {
+			return left.GreaterValue(rightVal)
+		}
+	case "<":
+		if left, ok := leftVal.(LesserValuer); ok {
+			return left.LesserValue(rightVal)
+		}
 	case ">=":
-		result = (left >= right)
-	default:
-		return nil, errInvalidOp
+		if left, ok := leftVal.(GreaterEqualValuer); ok {
+			return left.GreaterEqualValue(rightVal)
+		}
+	case "<=":
+		if left, ok := leftVal.(LesserEqualValuer); ok {
+			return left.LesserEqualValue(rightVal)
+		}
 	}
 
-	return &BooleanLiteral{Value: result}, nil
-}
-
-func evalBinaryString(op, left string, rightVal Value) (Value, error) {
-	switch op {
-	case "+":
-		// CONCAT
-		result := left + rightVal.AsString()
-		return NewString(result), nil
-	case "==":
-		result := left == rightVal.AsString()
-		return &BooleanLiteral{Value: result}, nil
-	case "!=":
-		result := left != rightVal.AsString()
-		return &BooleanLiteral{Value: result}, nil
-	default:
-		return nil, errInvalidOp
-	}
+	err = fmt.Errorf("operator %q can't be used on %s", n.Op, leftVal)
+	return nil, err
 }

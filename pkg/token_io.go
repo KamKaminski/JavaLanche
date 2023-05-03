@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"unicode"
 )
@@ -163,21 +162,6 @@ func (t *Tokenizer) PeekToken() (*Token, error) {
 	return token, nil
 }
 
-func readTestCasesFromFile(filename string) ([]string, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	var testCases []string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		testCases = append(testCases, scanner.Text())
-	}
-
-	return testCases, scanner.Err()
-}
 func (t TokenType) String() string {
 	switch t {
 	case Unknown:
@@ -335,10 +319,10 @@ func (t *Tokenizer) NextToken() (*Token, error) {
 
 		case Unknown:
 			if isWhitespace(r) {
-				code = code[1:]
+				// code = code[1:]
 			} else {
 				// Report the correct position using the `position` variable
-				return nil, fmt.Errorf("Invalid character at position %d in remaining code: %s", t.position, code)
+				return nil, fmt.Errorf("invalid character at position %d in remaining code: %s", t.position, code)
 			}
 		}
 	}

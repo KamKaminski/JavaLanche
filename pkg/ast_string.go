@@ -11,6 +11,7 @@ var (
 	_ Node           = (*StringLiteral)(nil)
 	_ fmt.GoStringer = (*StringLiteral)(nil)
 	_ fmt.Stringer   = (*StringLiteral)(nil)
+	_ AddValuer      = (*StringLiteral)(nil)
 )
 
 type StringLiteral struct {
@@ -54,4 +55,12 @@ func (n *StringLiteral) Eval() (Value, error) {
 
 func (n *StringLiteral) Equal(v Value) bool {
 	return n.Value == v.AsString()
+}
+
+// AddValue concatenates two strings, converting the argument
+// to string first if needed.
+func (n *StringLiteral) AddValue(v Value) (Value, error) {
+	rightStr := v.AsString()
+	result := n.Value + rightStr
+	return NewString(result), nil
 }

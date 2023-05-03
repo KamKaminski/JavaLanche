@@ -2,13 +2,23 @@ package javalanche
 
 import (
 	"fmt"
+	"math"
 )
 
 var (
-	_ Value          = (*FloatLiteral)(nil)
-	_ Node           = (*FloatLiteral)(nil)
-	_ fmt.GoStringer = (*FloatLiteral)(nil)
-	_ fmt.Stringer   = (*FloatLiteral)(nil)
+	_ Value              = (*FloatLiteral)(nil)
+	_ Node               = (*FloatLiteral)(nil)
+	_ fmt.GoStringer     = (*FloatLiteral)(nil)
+	_ fmt.Stringer       = (*FloatLiteral)(nil)
+	_ AddValuer          = (*FloatLiteral)(nil)
+	_ SubValuer          = (*FloatLiteral)(nil)
+	_ MulValuer          = (*FloatLiteral)(nil)
+	_ DivValuer          = (*FloatLiteral)(nil)
+	_ UpValuer           = (*FloatLiteral)(nil)
+	_ GreaterEqualValuer = (*FloatLiteral)(nil)
+	_ LesserEqualValuer  = (*FloatLiteral)(nil)
+	_ LesserValuer       = (*FloatLiteral)(nil)
+	_ GreaterValuer      = (*FloatLiteral)(nil)
 )
 
 type FloatLiteral struct {
@@ -48,5 +58,139 @@ func (n *FloatLiteral) Eval() (Value, error) {
 }
 
 func (n *FloatLiteral) Equal(v Value) bool {
-	return false
+	switch right := v.(type) {
+	case *FloatLiteral:
+		return n.Value == right.Value
+	case *IntegerLiteral:
+		return n.Value == float64(right.Value)
+	default:
+		return false
+	}
+}
+
+func (n *FloatLiteral) AddValue(v Value) (Value, error) {
+	switch right := v.(type) {
+	case *FloatLiteral:
+		res := n.Value + right.Value
+		return NewFloat(res), nil
+	case *IntegerLiteral:
+		res := n.Value + float64(right.Value)
+		return NewFloat(res), nil
+	default:
+		return nil, errInvalidTypes
+	}
+}
+
+func (n *FloatLiteral) SubValue(v Value) (Value, error) {
+	switch right := v.(type) {
+	case *FloatLiteral:
+		res := (n.Value) - (right.Value)
+		return NewFloat(res), nil
+	case *IntegerLiteral:
+		res := (n.Value) - (float64)(right.Value)
+		return NewFloat(res), nil
+	default:
+		return nil, errInvalidTypes
+	}
+}
+
+func (n *FloatLiteral) DivValue(v Value) (Value, error) {
+	switch right := v.(type) {
+	case *FloatLiteral:
+		if right.Value == 0 {
+			return nil, errDivZero
+		}
+		// float/float -> float
+		res := n.Value / right.Value
+		return NewFloat(res), nil
+	case *IntegerLiteral:
+		if right.Value == 0 {
+			return nil, errDivZero
+		}
+		// float / int -> float
+		res := n.Value / (float64)(right.Value)
+		return NewFloat(res), nil
+	default:
+		return nil, errInvalidTypes
+	}
+}
+
+func (n *FloatLiteral) MulValue(v Value) (Value, error) {
+	switch right := v.(type) {
+	case *FloatLiteral:
+		// 3.5 * 2.5 -> 8.75
+		res := n.Value * right.Value
+		return NewFloat(res), nil
+	case *IntegerLiteral:
+		res := n.Value * (float64)(right.Value)
+		// 3.5 * 1.0 -> 3.5
+		return NewFloat(res), nil
+	default:
+		return nil, errInvalidTypes
+	}
+}
+
+func (n *FloatLiteral) UpValue(v Value) (Value, error) {
+	switch right := v.(type) {
+	case *FloatLiteral:
+		res := math.Pow(n.Value, right.Value)
+		return NewFloat(res), nil
+	case *IntegerLiteral:
+		res := math.Pow(n.Value, (float64)(right.Value))
+		return NewFloat(res), nil
+	default:
+		return nil, errInvalidTypes
+	}
+}
+
+func (n *FloatLiteral) LesserValue(v Value) (Value, error) {
+	switch right := v.(type) {
+	case *FloatLiteral:
+		res := (n.Value < right.Value)
+		return NewBoolean(res), nil
+	case *IntegerLiteral:
+		res := (n.Value < (float64)(right.Value))
+		return NewBoolean(res), nil
+	default:
+		return nil, errInvalidTypes
+	}
+}
+
+func (n *FloatLiteral) GreaterValue(v Value) (Value, error) {
+	switch right := v.(type) {
+	case *FloatLiteral:
+		res := (n.Value > right.Value)
+		return NewBoolean(res), nil
+	case *IntegerLiteral:
+		res := (n.Value > (float64)(right.Value))
+		return NewBoolean(res), nil
+	default:
+		return nil, errInvalidTypes
+	}
+}
+
+func (n *FloatLiteral) GreaterEqualValue(v Value) (Value, error) {
+	switch right := v.(type) {
+	case *FloatLiteral:
+		res := (n.Value >= right.Value)
+		return NewBoolean(res), nil
+	case *IntegerLiteral:
+		res := (n.Value >= (float64)(right.Value))
+		return NewBoolean(res), nil
+	default:
+		return nil, errInvalidTypes
+	}
+}
+
+func (n *FloatLiteral) LesserEqualValue(v Value) (Value, error) {
+	switch right := v.(type) {
+	case *FloatLiteral:
+		res := (n.Value <= right.Value)
+		return NewBoolean(res), nil
+	case *IntegerLiteral:
+		res := (n.Value <= (float64)(right.Value))
+		return NewBoolean(res), nil
+	default:
+		return nil, errInvalidTypes
+	}
 }

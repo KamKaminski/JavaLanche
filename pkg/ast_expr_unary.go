@@ -32,22 +32,20 @@ func (n *UnaryExpression) String() string {
 }
 
 func (n *UnaryExpression) Eval() (Value, error) {
-	log.Printf("Eval:%#v", n)
+	log.Printf("Eval: %#v", n)
 
 	val, err := n.Expr.Eval()
 	if err != nil {
 		return nil, err
 	}
 
-	if n.Op != "!" {
-		return nil, fmt.Errorf("unknown operator: %s", n.Op)
+	switch n.Op {
+	case "!":
+		if left, ok := val.(LogicalNotValuer); ok {
+			return left.LogicalNotValue()
+		}
 	}
 
-	switch val.Type() {
-	case ValueTypeBool, ValueTypeInt, ValueTypeFloat:
-		result := !val.AsBool()
-		return &BooleanLiteral{Value: result}, nil
-	default:
-		return nil, errInvalidType
-	}
+	err = fmt.Errorf("operator %q can't be used on %s", n.Op, val)
+	return nil, err
 }
