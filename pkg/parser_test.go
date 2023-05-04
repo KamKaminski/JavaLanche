@@ -7,6 +7,8 @@ func TestParser(t *testing.T) {
 		expr   string // string to evaluate
 		result Value  // expected Value. nil if we expect an error
 	}{
+		{"x = 10", NewInteger(10)},
+		{"y = 12", NewInteger(12)},
 		{"5^-3", NewFloat(0.008)},
 		{"3^0", NewInteger(1)},
 		{"\"foo\" + \"bar\"", NewString("foobar")},                 // String concatenation

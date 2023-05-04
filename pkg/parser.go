@@ -127,7 +127,7 @@ func (p *Parser) parseExpression() (Node, error) {
 		return nil, err
 	}
 
-	for p.current.Type == Operator && (p.current.Value == "+" || p.current.Value == "-") {
+	for p.current.Type == Operator && (p.current.Value == "+" || p.current.Value == "-") || p.current.Value == "=" {
 		op := p.current.Value
 		if err := p.nextToken(); err != nil {
 			return nil, err
@@ -196,6 +196,11 @@ func (p *Parser) parsePrimary() (Node, error) {
 		value := p.current.Value == "true"
 		p.nextToken()
 		return &BooleanLiteral{Value: value}, nil
+	}
+	if p.current.Type == Identifier {
+		name := p.current.Value
+		p.nextToken()
+		return &Variable{Name: name}, nil
 	}
 
 	if p.current.Type == Number {

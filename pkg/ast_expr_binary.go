@@ -28,6 +28,13 @@ func (n *BinaryExpression) String() string {
 func (n *BinaryExpression) Eval(ctx *Evaluator) (Value, error) {
 	log.Printf("Eval: %#v", n)
 
+	// normally we evaluate both sides before looking at
+	// the operation, that doesn't work for `=`
+	switch n.Op {
+	case "=":
+		return n.evalAssign(ctx)
+	}
+
 	leftVal, err := n.Left.Eval(ctx)
 	if err != nil {
 		return nil, err
@@ -97,5 +104,19 @@ func (n *BinaryExpression) Eval(ctx *Evaluator) (Value, error) {
 	}
 
 	err = fmt.Errorf("operator %q can't be used on %s", n.Op, leftVal)
+	return nil, err
+}
+
+func (n *BinaryExpression) evalAssign(ctx *Evaluator) (Value, error) {
+	rightVal, err := n.Right.Eval(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if left, ok := n.Left.(SetValuer); ok {
+		return left.SetValue(ctx, rightVal)
+	}
+
+	err = fmt.Errorf("operator %q can't be used on %s", n.Op, n.Left)
 	return nil, err
 }
