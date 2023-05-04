@@ -25,15 +25,15 @@ func (n *BinaryExpression) String() string {
 	return fmt.Sprintf("%s %s %s", n.Left, n.Op, n.Right)
 }
 
-func (n *BinaryExpression) Eval() (Value, error) {
+func (n *BinaryExpression) Eval(ctx *Evaluator) (Value, error) {
 	log.Printf("Eval: %#v", n)
 
-	leftVal, err := n.Left.Eval()
+	leftVal, err := n.Left.Eval(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	rightVal, err := n.Right.Eval()
+	rightVal, err := n.Right.Eval(ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -54,7 +54,7 @@ func (n *IntegerLiteral) AsBool() bool {
 	return n.Value != 0
 }
 
-func (n *IntegerLiteral) Eval() (Value, error) {
+func (n *IntegerLiteral) Eval(ctx *Evaluator) (Value, error) {
 	log.Printf("Eval: %#v", n)
 	return n, nil
 }

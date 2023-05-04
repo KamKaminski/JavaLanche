@@ -27,7 +27,7 @@ func EvalString(expr string) (Value, error) {
 		return nil, err
 	}
 
-	value, err := ast.Eval()
+	value, err := ast.Eval(evaluator)
 	if err != nil {
 		return nil, err
 	}

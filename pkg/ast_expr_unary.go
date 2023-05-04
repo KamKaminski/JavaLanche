@@ -31,10 +31,10 @@ func (n *UnaryExpression) String() string {
 	}
 }
 
-func (n *UnaryExpression) Eval() (Value, error) {
+func (n *UnaryExpression) Eval(ctx *Evaluator) (Value, error) {
 	log.Printf("Eval: %#v", n)
 
-	val, err := n.Expr.Eval()
+	val, err := n.Expr.Eval(ctx)
 	if err != nil {
 		return nil, err
 	}

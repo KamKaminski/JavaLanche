@@ -46,7 +46,7 @@ func main() {
 			continue
 		}
 
-		result, err := node.Eval()
+		result, err := node.Eval(evaluator)
 		if err != nil {
 			fmt.Printf("Error evaluating expression: %s\n", err)
 			continue

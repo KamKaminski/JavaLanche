@@ -71,7 +71,7 @@ type Value interface {
 }
 
 type Node interface {
-	Eval() (Value, error)
+	Eval(ctx *Evaluator) (Value, error)
 }
 
 type ValueType int

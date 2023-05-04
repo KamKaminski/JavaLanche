@@ -47,7 +47,7 @@ func (n *StringLiteral) AsFloat64() float64 {
 	return v
 }
 
-func (n *StringLiteral) Eval() (Value, error) {
+func (n *StringLiteral) Eval(ctx *Evaluator) (Value, error) {
 	log.Println("String.Eval", n.Value)
 
 	return n, nil
