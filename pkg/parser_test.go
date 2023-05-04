@@ -7,6 +7,8 @@ func TestParser(t *testing.T) {
 		expr   string // string to evaluate
 		result Value  // expected Value. nil if we expect an error
 	}{
+		{"5^-3", NewFloat(0.008)},
+		{"3^0", NewInteger(1)},
 		{"\"foo\" + \"bar\"", NewString("foobar")},                 // String concatenation
 		{"1.0 == 1", NewBoolean(true)},                             // Float and integer equality
 		{"1.0 != 1", NewBoolean(false)},                            // Float and integer inequality

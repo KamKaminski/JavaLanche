@@ -132,16 +132,44 @@ func (n *IntegerLiteral) MulValue(v Value) (Value, error) {
 func (n *IntegerLiteral) UpValue(v Value) (Value, error) {
 	switch right := v.(type) {
 	case *IntegerLiteral:
-		// Using primivite as math.pow signature requires floats
-		res := (n.Value ^ right.Value)
-		return NewInteger(res), nil
+		return n.powInt(n.Value, right.Value)
 	case *FloatLiteral:
-		// floats values so we can use math.pow
-		res := math.Pow((float64)(n.Value), right.Value)
-		return NewFloat(res), nil
+		return n.powFloat(float64(n.Value), right.Value)
 	default:
 		return nil, errInvalidTypes
 	}
+}
+
+func (*IntegerLiteral) powFloat(a, b float64) (Value, error) {
+	return NewFloat(math.Pow(a, b)), nil
+}
+
+func (*IntegerLiteral) powInt(a, b int) (Value, error) {
+	var res int
+
+	switch {
+	case b < 0:
+		// negative
+		res = powIntPositive(a, -b)
+		return NewFloat(1 / float64(res)), nil
+	case b == 0:
+		res = 1
+	default:
+		// positive
+		res = powIntPositive(a, b)
+	}
+
+	return NewInteger(res), nil
+}
+
+func powIntPositive(base, exponent int) int {
+	result := 1
+
+	for i := 0; i < exponent; i++ {
+		result *= base
+	}
+
+	return result
 }
 
 func (n *IntegerLiteral) LesserValue(v Value) (Value, error) {
