@@ -82,7 +82,7 @@ func isIdentifierPart(r rune) bool {
 }
 
 func isWhitespace(r rune) bool {
-	return unicode.IsSpace(r)
+	return unicode.IsSpace(r) || r == '\n'
 }
 
 func isDigit(r rune) bool {
@@ -228,6 +228,9 @@ func (t *Tokenizer) NextToken() (*Token, error) {
 		}
 		if err != nil {
 			return nil, err
+		}
+		if r == '\n' {
+			continue
 		}
 
 		t.position++

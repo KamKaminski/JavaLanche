@@ -28,8 +28,6 @@ func (n *BinaryExpression) String() string {
 func (n *BinaryExpression) Eval(ctx *Evaluator) (Value, error) {
 	log.Printf("Eval: %#v", n)
 
-	// normally we evaluate both sides before looking at
-	// the operation, that doesn't work for `=`
 	switch n.Op {
 	case "=":
 		return n.evalAssign(ctx)
@@ -45,6 +43,8 @@ func (n *BinaryExpression) Eval(ctx *Evaluator) (Value, error) {
 		return nil, err
 	}
 
+	log.Printf("Left value: %v, Right value: %v", leftVal, rightVal)
+
 	switch n.Op {
 	case "==":
 		eq := leftVal.Equal(rightVal)
@@ -53,19 +53,14 @@ func (n *BinaryExpression) Eval(ctx *Evaluator) (Value, error) {
 		eq := leftVal.Equal(rightVal)
 		return NewBoolean(!eq), nil
 	case "&&", "and":
-		// left.AndValue(right)
-		// left is of type AndValuer,
-		//we can only use it if the cast succeeded (ok)
 		if left, ok := leftVal.(AndValuer); ok {
 			return left.AndValue(rightVal)
 		}
 	case "||", "or":
-		// left.OrValue(right)
 		if left, ok := leftVal.(OrValuer); ok {
 			return left.OrValue(rightVal)
 		}
 	case "^":
-		// left.UpValue(right)
 		if left, ok := leftVal.(UpValuer); ok {
 			return left.UpValue(rightVal)
 		}
@@ -113,8 +108,12 @@ func (n *BinaryExpression) evalAssign(ctx *Evaluator) (Value, error) {
 		return nil, err
 	}
 
-	if left, ok := n.Left.(SetValuer); ok {
-		return left.SetValue(ctx, rightVal)
+	if left, ok := n.Left.(*Variable); ok {
+		res, err := left.SetValue(ctx, rightVal)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
 	}
 
 	err = fmt.Errorf("operator %q can't be used on %s", n.Op, n.Left)

@@ -30,13 +30,13 @@ func (e *Evaluator) GetValue(name string) (Value, error) {
 	return nil, fmt.Errorf("variable %q not found", name)
 }
 
-func EvalString(expr string) (Value, error) {
+func EvalString(expr string, evaluator *Evaluator) (Value, error) {
 	if expr == "" {
 		return nil, errors.New("empty string received")
 	}
-	// Since Tokenizer implements idea of I/O we need to turn our input into the reader
+
+	// Since Tokenizer implements the idea of I/O, we need to turn our input into the reader
 	reader := strings.NewReader(expr)
-	evaluator := NewEvaluator()
 	lexer := NewTokenizer(reader)
 	parser := NewParser(lexer, evaluator)
 
@@ -46,9 +46,11 @@ func EvalString(expr string) (Value, error) {
 	}
 
 	value, err := ast.Eval(evaluator)
+	fmt.Printf("Generated AST: %v\n", ast)
+	fmt.Printf("Evaluator state: %v\n", evaluator.Variable)
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Printf("Evaluator state: %v\n", evaluator.Variable)
 	return value, nil
 }

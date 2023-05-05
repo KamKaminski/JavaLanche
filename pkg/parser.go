@@ -23,9 +23,8 @@ func (p *Parser) Parse() (Node, error) {
 	p.nextToken()
 	return p.parseTopLevel()
 }
-
 func (p *Parser) parseTopLevel() (Node, error) {
-	return p.parseBooleanExpression()
+	return p.parseAssignment()
 }
 
 func (p *Parser) parseBooleanExpression() (Node, error) {
@@ -92,7 +91,7 @@ func (p *Parser) parseOr() (Node, error) {
 }
 
 func (p *Parser) parseComparison() (Node, error) {
-	left, err := p.parseExpression()
+	left, err := p.parseAssignment()
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +126,7 @@ func (p *Parser) parseExpression() (Node, error) {
 		return nil, err
 	}
 
-	for p.current.Type == Operator && (p.current.Value == "+" || p.current.Value == "-") || p.current.Value == "=" {
+	for p.current.Type == Operator && (p.current.Value == "+" || p.current.Value == "-") {
 		op := p.current.Value
 		if err := p.nextToken(); err != nil {
 			return nil, err
@@ -262,4 +261,24 @@ func (p *Parser) parseExponent(base Node) (Node, error) {
 		base = &BinaryExpression{Left: base, Op: op, Right: exponent}
 	}
 	return base, nil
+}
+func (p *Parser) parseAssignment() (Node, error) {
+	left, err := p.parseExpression()
+	if err != nil {
+		return nil, err
+	}
+
+	if p.current.Type == Operator && p.current.Value == "=" {
+		op := p.current.Value
+		if err := p.nextToken(); err != nil {
+			return nil, err
+		}
+		right, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		left = &BinaryExpression{Left: left, Op: op, Right: right}
+	}
+
+	return left, nil
 }
