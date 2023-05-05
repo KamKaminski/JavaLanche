@@ -91,7 +91,7 @@ func (p *Parser) parseOr() (Node, error) {
 }
 
 func (p *Parser) parseComparison() (Node, error) {
-	left, err := p.parseAssignment()
+	left, err := p.parseExpression()
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +263,7 @@ func (p *Parser) parseExponent(base Node) (Node, error) {
 	return base, nil
 }
 func (p *Parser) parseAssignment() (Node, error) {
-	left, err := p.parseExpression()
+	left, err := p.parseBooleanExpression()
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +273,7 @@ func (p *Parser) parseAssignment() (Node, error) {
 		if err := p.nextToken(); err != nil {
 			return nil, err
 		}
-		right, err := p.parseExpression()
+		right, err := p.parseBooleanExpression()
 		if err != nil {
 			return nil, err
 		}

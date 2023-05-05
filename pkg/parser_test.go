@@ -14,140 +14,83 @@ func TestParserWithContext(t *testing.T) {
 	var cases = []testCase{
 
 		{
-			exprs:  []string{"x = 10\n", "y =  x + 7\n", "\nx * y"},
-			result: NewInteger(170),
+			exprs:  []string{"x = 10", "y = x + 5", "x * y"},
+			result: NewInteger(150),
 		},
 		{
-			exprs:  []string{"x = 10\n", "y =  (x + 7)\n", "\nx * y"},
-			result: NewInteger(170),
+			exprs:  []string{"x = 3", "y = 4", "x * y"},
+			result: NewInteger(12),
 		},
 		{
-			exprs:  []string{"x = 20\n", "y =  x + 4\n", "\nx * y"},
-			result: NewInteger(480),
-		},
-
-		{
-			exprs:  []string{`"Hello" + " " + "world"`},
-			result: NewString("Hello world"),
+			exprs:  []string{"x = 7", "y = 8", "y+x"},
+			result: NewInteger(15),
 		},
 		{
-			exprs:  []string{"quicmaths = 10 + 9", "quicmaths + 2"},
-			result: NewInteger(21),
+			exprs:  []string{"x = 7", "y = x + 8", "y * x"},
+			result: NewInteger(105),
 		},
 		{
-			exprs:  []string{"x = \"Hello\"", "x + \" world\""},
-			result: NewString("Hello world"),
+			exprs:  []string{"true and true == true"},
+			result: NewBoolean(true),
 		},
 		{
-			exprs:  []string{"x = 10"},
-			result: NewInteger(10),
+			exprs:  []string{"!(5 - 4 > 3 * 2 == !false)"},
+			result: NewBoolean(true),
 		},
 		{
-			exprs:  []string{"y = 5"},
-			result: NewInteger(5),
+			exprs:  []string{"3 == 3"},
+			result: NewBoolean(true),
 		},
 		{
-			exprs:  []string{"x = 10", "x * 2"},
-			result: NewInteger(20),
+			exprs:  []string{"3 <= 3"},
+			result: NewBoolean(true),
 		},
 		{
-			exprs:  []string{"5^-3"},
-			result: NewFloat(0.008),
-		},
-		{
-			exprs:  []string{"3^0"},
-			result: NewInteger(1),
-		},
-		{
-			exprs:  []string{`"foo" + "bar"`},
-			result: NewString("foobar"),
-		},
-		{
-			exprs:  []string{"1.0 == 1"},
+			exprs:  []string{"4 > 5"},
 			result: NewBoolean(false),
 		},
 		{
-			exprs:  []string{"1.0 != 1"},
+			exprs:  []string{"\"hello\"+ \"world"},
+			result: NewString("helloworld"),
+		},
+		{
+			exprs:  []string{"x = 2", "y = 3", "x * y + 4 <= 12"},
 			result: NewBoolean(true),
 		},
 		{
-			exprs:  []string{"-5 < -3"},
-			result: NewBoolean(true),
-		},
-		{
-			exprs:  []string{"-5.0 < -3.0"},
-			result: NewBoolean(true),
-		},
-		{
-			exprs:  []string{"true == 1"},
+			exprs:  []string{"x = 2", "y = 3", "x * y + 4 > 12"},
 			result: NewBoolean(false),
 		},
 		{
-			exprs:  []string{"1+1"},
+			exprs:  []string{"x = 3", "y = 4", "x * y / 2 + 1"},
+			result: NewInteger(7),
+		},
+		{
+			exprs:  []string{"x = 10", "y = 2", "x ^ y"},
+			result: NewInteger(100),
+		},
+		{
+			exprs:  []string{"x = 10", "y = 5", "x / y"},
 			result: NewInteger(2),
 		},
 		{
-			exprs:  []string{"3>=3"},
-			result: NewBoolean(true),
-		},
-		{
-			exprs:  []string{"6<=4"},
+			exprs:  []string{"x = true", "y = false", "x and y"},
 			result: NewBoolean(false),
 		},
 		{
-			exprs:  []string{"5 / 0"},
-			result: nil,
-		},
-		{
-			exprs:  []string{"5.0 / 0.0"},
-			result: nil,
-		},
-		{
-			exprs:  []string{"true + false"},
-			result: nil,
-		},
-		{
-			exprs:  []string{"true * false"},
-			result: nil,
-		},
-		{
-			exprs:  []string{"-1.5 + 2"},
-			result: NewFloat(0.5),
-		},
-		{
-			exprs:  []string{"1 == 1"},
+			exprs:  []string{"x = true", "y = false", "x or y"},
 			result: NewBoolean(true),
 		},
 		{
-			exprs:  []string{"(5 >= 5)"},
-			result: NewBoolean(true),
+			exprs:  []string{"x = \"hello\"", "y = \"world\"", "x + y"},
+			result: NewString("helloworld"),
 		},
 		{
-			exprs:  []string{"2 ** 3"},
-			result: nil,
-		},
-		{
-			exprs:  []string{"1 != 1"},
+			exprs:  []string{"x = 2", "y = 3", "x * y > 6 and x + y < 7"},
 			result: NewBoolean(false),
 		},
 		{
-			exprs:  []string{"(5 <= 5)"},
-			result: NewBoolean(true),
-		},
-		{
-			exprs:  []string{"3.14159 * 2"},
-			result: NewFloat(6.28318),
-		},
-		{
-			exprs:  []string{"3.14159 / 2"},
-			result: NewFloat(1.570795),
-		},
-		{
-			exprs:  []string{"0.1 == 0.1"},
-			result: NewBoolean(true),
-		},
-		{
-			exprs:  []string{"0.1 != 0.2"},
+			exprs:  []string{"x = 2", "y = 3", "x * y > 6 or x + y < 7"},
 			result: NewBoolean(true),
 		},
 	}

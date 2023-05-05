@@ -54,3 +54,5 @@ func EvalString(expr string, evaluator *Evaluator) (Value, error) {
 	fmt.Printf("Evaluator state: %v\n", evaluator.Variable)
 	return value, nil
 }
+
+
