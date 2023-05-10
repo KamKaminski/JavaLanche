@@ -2,7 +2,6 @@ package javalanche
 
 import (
 	"fmt"
-	"log"
 )
 
 var (
@@ -32,8 +31,6 @@ func (n *UnaryExpression) String() string {
 }
 
 func (n *UnaryExpression) Eval(ctx *Evaluator) (Value, error) {
-	log.Printf("Eval: %#v", n)
-
 	val, err := n.Expr.Eval(ctx)
 	if err != nil {
 		return nil, err

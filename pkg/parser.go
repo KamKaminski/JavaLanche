@@ -2,7 +2,6 @@ package javalanche
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 )
 
@@ -116,7 +115,6 @@ func (p *Parser) nextToken() error {
 		return err
 	}
 	p.current = token
-	fmt.Printf("nextToken: current token = %v\n", p.current)
 	return nil
 }
 
@@ -241,7 +239,7 @@ func (p *Parser) parsePrimary() (Node, error) {
 	if p.current.Type == String {
 		value := p.current.Value
 		p.nextToken()
-		log.Println("Primary stirng case", value)
+
 		return &StringLiteral{Value: value}, nil
 	}
 
@@ -262,6 +260,7 @@ func (p *Parser) parseExponent(base Node) (Node, error) {
 	}
 	return base, nil
 }
+
 func (p *Parser) parseAssignment() (Node, error) {
 	left, err := p.parseBooleanExpression()
 	if err != nil {

@@ -6,8 +6,7 @@ import (
 
 var (
 	errInvalidTypes = errors.New("invalid types")
-	//	errInvalidOp    = errors.New("invalid operator")
-	errDivZero = errors.New("division by zero")
+	errDivZero      = errors.New("division by zero")
 )
 
 type AddValuer interface {

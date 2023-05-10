@@ -2,7 +2,6 @@ package javalanche
 
 import (
 	"fmt"
-	"log"
 )
 
 var (
@@ -26,8 +25,6 @@ func (n *BinaryExpression) String() string {
 }
 
 func (n *BinaryExpression) Eval(ctx *Evaluator) (Value, error) {
-	log.Printf("Eval: %#v", n)
-
 	// normally we evaluate both sides before looking at
 	// the operation, that doesn't work for `=`
 	switch n.Op {

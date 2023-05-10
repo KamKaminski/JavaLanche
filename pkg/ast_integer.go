@@ -2,7 +2,6 @@ package javalanche
 
 import (
 	"fmt"
-	"log"
 	"math"
 )
 
@@ -55,7 +54,6 @@ func (n *IntegerLiteral) AsBool() bool {
 }
 
 func (n *IntegerLiteral) Eval(ctx *Evaluator) (Value, error) {
-	log.Printf("Eval: %#v", n)
 	return n, nil
 }
 

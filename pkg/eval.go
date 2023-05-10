@@ -46,13 +46,9 @@ func EvalString(expr string, evaluator *Evaluator) (Value, error) {
 	}
 
 	value, err := ast.Eval(evaluator)
-	fmt.Printf("Generated AST: %v\n", ast)
-	fmt.Printf("Evaluator state: %v\n", evaluator.Variable)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Evaluator state: %v\n", evaluator.Variable)
+
 	return value, nil
 }
-
-

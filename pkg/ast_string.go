@@ -2,7 +2,6 @@ package javalanche
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 )
 
@@ -48,8 +47,6 @@ func (n *StringLiteral) AsFloat64() float64 {
 }
 
 func (n *StringLiteral) Eval(ctx *Evaluator) (Value, error) {
-	log.Println("String.Eval", n.Value)
-
 	return n, nil
 }
 
