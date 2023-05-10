@@ -1,3 +1,4 @@
+// Package main implements REPL
 package main
 
 import (
@@ -6,63 +7,84 @@ import (
 	"os"
 	"strings"
 
+	"github.com/fatih/color"
+
 	javalanche "javalanche/pkg"
 )
 
-func main() {
-	file, err := os.Open("reader.txt")
-	if err != nil {
-		fmt.Printf("Error opening file: %s\n", err)
-		return
+var (
+	purple = color.New(color.FgHiYellow).SprintFunc()
+	red    = color.New(color.FgHiRed).SprintFunc()
+	yellow = color.New(color.FgHiGreen).SprintFunc()
+)
+
+// getline reads a line of text from the console, optionally showing a prompt first
+func getline(prompt bool) (string, error) {
+	if prompt {
+		fmt.Print(yellow("javalanche> ")) // Print a prompt
 	}
-	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
-	inputs := []string{}
+	reader := bufio.NewReader(os.Stdin)
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	// Trim the newline character from the input
+	line = strings.TrimSpace(line)
+	return line, nil
+}
 
-	for scanner.Scan() {
-		inputs = append(inputs, scanner.Text())
-		if err := scanner.Err(); err != nil {
-			fmt.Printf("Error reading file: %s\n", err)
+// printError represents function printing errors
+func printError(err error) {
+	fmt.Println(red("Error"), err)
+}
+
+// printResults prints a message on the console corresponding to the result value of evaluating and expression
+func printResult(result javalanche.Value) {
+	fmt.Printf("%s %v\n", purple("Result:"), result)
+}
+
+// isExit checks if the input is the exit command
+func isExit(line string) bool {
+	return strings.EqualFold(line, "exit")
+}
+
+// Main creates new context
+func main() {
+	ctx := javalanche.New()
+	repl(ctx)
+}
+
+// Repl allows user to interact with the program
+func repl(ctx *javalanche.Javalanche) {
+	prompt := true
+
+	for {
+		line, err := getline(prompt)
+		switch {
+		case isExit(line):
+			return
+		case err != nil:
+			printError(err)
 			return
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		fmt.Printf("Error reading file: %s\n", err)
-		return
-	}
-
-	for i, input := range inputs {
-		fmt.Printf("Test case #%d: %s\n", i+1, input)
-		reader := strings.NewReader(input)
-		tokenizer := javalanche.NewTokenizer(reader)
-		evaluator := javalanche.NewEvaluator()
-		parser := javalanche.NewParser(tokenizer, evaluator)
-		node, err := parser.Parse()
-
-		if err != nil {
-			fmt.Printf("Error parsing input: %s\n", err)
-			continue
-		}
-
-		result, err := node.Eval(evaluator)
-		if err != nil {
-			fmt.Printf("Error evaluating expression: %s\n", err)
-			continue
-		}
-
-		switch result.Type() {
-		case javalanche.ValueTypeBool:
-			fmt.Printf("Result: %t\n", result.AsBool())
-		case javalanche.ValueTypeString:
-			fmt.Printf("Result: %s\n", result.AsString())
+		// evaluate
+		value, err := ctx.EvalLine(line)
+		switch {
+		case err == javalanche.ErrMoreData:
+			// needs another line
+			prompt = false
+		case err != nil:
+			// error
+			printError(err)
+			prompt = true
+		case value != nil:
+			// result
+			printResult(value)
+			prompt = true
 		default:
-			if float64(int(result.AsFloat64())) == result.AsFloat64() {
-				fmt.Printf("Result: %d\n", int(result.AsFloat64()))
-			} else {
-				fmt.Printf("Result: %.2f\n", result.AsFloat64())
-			}
+			// silent statement
+			prompt = true
 		}
 	}
 }
