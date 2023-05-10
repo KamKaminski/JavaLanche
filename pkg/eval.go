@@ -2,7 +2,6 @@
 package javalanche
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -35,11 +34,25 @@ func (e *Evaluator) GetValue(name string) (Value, error) {
 }
 
 // EvalString evaluates expressions
-func EvalString(evaluator *Evaluator, expr string) (Value, error) {
-	if expr == "" {
-		return nil, errors.New("empty string received")
+func EvalString(evaluator *Evaluator, exprs ...string) (Value, error) {
+	var res Value
+
+	for _, expr := range exprs {
+		expr = strings.TrimSpace(expr)
+		if expr != "" {
+			var err error
+
+			res, err = evalSingleExpression(evaluator, expr)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
+	return res, nil
+}
+
+func evalSingleExpression(evaluator *Evaluator, expr string) (Value, error) {
 	// Since Tokenizer implements the idea of I/O, we need to turn our input into the reader
 	reader := strings.NewReader(expr)
 	lexer := NewTokenizer(reader)

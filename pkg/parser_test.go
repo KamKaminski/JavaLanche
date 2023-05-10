@@ -1,7 +1,6 @@
 package javalanche
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -97,17 +96,7 @@ func TestParserWithContext(t *testing.T) {
 
 	for _, tc := range cases {
 		evaluator := NewEvaluator()
-		var res Value
-		var err error
-
-		for _, expr := range tc.exprs {
-			res, err = EvalString(evaluator, expr)
-			fmt.Printf("Evaluated expression %q, result is %v\n", expr, res)
-
-			if err != nil {
-				break
-			}
-		}
+		res, err := EvalString(evaluator, tc.exprs...)
 
 		switch {
 		case err != nil && tc.result == nil:
