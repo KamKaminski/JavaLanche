@@ -101,7 +101,7 @@ func TestParserWithContext(t *testing.T) {
 		var err error
 
 		for _, expr := range tc.exprs {
-			res, err = EvalString(expr, evaluator)
+			res, err = EvalString(evaluator, expr)
 			fmt.Printf("Evaluated expression %q, result is %v\n", expr, res)
 
 			if err != nil {

@@ -24,5 +24,5 @@ func New() *Javalanche {
 
 // EvalLine evaluates a line of input
 func (j *Javalanche) EvalLine(s string) (Value, error) {
-	return EvalString(s, j.Evaluator)
+	return EvalString(j.Evaluator, s)
 }

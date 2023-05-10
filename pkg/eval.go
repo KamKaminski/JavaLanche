@@ -1,3 +1,4 @@
+// Package javalanche provides an interpreter of the javalanche language
 package javalanche
 
 import (
@@ -6,22 +7,25 @@ import (
 	"strings"
 )
 
+// Evaluator struct represents map of the variables
 type Evaluator struct {
 	Variable map[string]Value
 }
 
-// creates a new Evaluator with an empty variable map
+// NewEvaluator creates a new Evaluator with an empty variable map
 func NewEvaluator() *Evaluator {
 	return &Evaluator{
 		Variable: make(map[string]Value),
 	}
 }
 
+// SetValue Assigns value to given variable
 func (e *Evaluator) SetValue(name string, v Value) error {
 	e.Variable[name] = v
 	return nil
 }
 
+// GetValue retrieves Value of given variable
 func (e *Evaluator) GetValue(name string) (Value, error) {
 	if v, ok := e.Variable[name]; ok {
 		return v, nil
@@ -30,7 +34,8 @@ func (e *Evaluator) GetValue(name string) (Value, error) {
 	return nil, fmt.Errorf("variable %q not found", name)
 }
 
-func EvalString(expr string, evaluator *Evaluator) (Value, error) {
+// EvalString evaluates expressions
+func EvalString(evaluator *Evaluator, expr string) (Value, error) {
 	if expr == "" {
 		return nil, errors.New("empty string received")
 	}
@@ -39,7 +44,6 @@ func EvalString(expr string, evaluator *Evaluator) (Value, error) {
 	reader := strings.NewReader(expr)
 	lexer := NewTokenizer(reader)
 	parser := NewParser(lexer, evaluator)
-
 	ast, err := parser.Parse()
 	if err != nil {
 		return nil, err
