@@ -22,7 +22,7 @@ func (e *Javalanche) GetValue(name string) (Value, error) {
 }
 
 // EvalString evaluates expressions
-func EvalString(evaluator *Javalanche, exprs ...string) (Value, error) {
+func (ctx *Javalanche) EvalLine(exprs ...string) (Value, error) {
 	var res Value
 
 	for _, expr := range exprs {
@@ -30,7 +30,7 @@ func EvalString(evaluator *Javalanche, exprs ...string) (Value, error) {
 		if expr != "" {
 			var err error
 
-			res, err = evalSingleExpression(evaluator, expr)
+			res, err = evalSingleExpression(ctx, expr)
 			if err != nil {
 				return nil, err
 			}
@@ -38,6 +38,7 @@ func EvalString(evaluator *Javalanche, exprs ...string) (Value, error) {
 	}
 
 	return res, nil
+
 }
 
 func evalSingleExpression(ctx *Javalanche, expr string) (Value, error) {

@@ -21,8 +21,3 @@ func New() *Javalanche {
 		Variable: make(map[string]Value),
 	}
 }
-
-// EvalLine evaluates a line of input
-func (j *Javalanche) EvalLine(s string) (Value, error) {
-	return EvalString(j, s)
-}
