@@ -10,7 +10,7 @@ type Variable struct {
 }
 
 type SetValuer interface {
-	SetValue(ctx *Javalanche, n Value) (Value, error)
+	SetValue(ctx *Javalanche, n Value) error
 }
 
 // evaluates the variable node by getting its value from the evaluator
@@ -19,10 +19,6 @@ func (v *Variable) Eval(ctx *Javalanche) (Value, error) {
 }
 
 // sets the value of the variable in the evaluator.
-func (v *Variable) SetValue(ctx *Javalanche, n Value) (Value, error) {
-	err := ctx.SetValue(v.Name, n)
-	if err != nil {
-		return nil, err
-	}
-	return n, nil
+func (v *Variable) SetValue(ctx *Javalanche, n Value) error {
+	return ctx.SetValue(v.Name, n)
 }

@@ -29,7 +29,8 @@ func (n *BinaryExpression) Eval(ctx *Javalanche) (Value, error) {
 	// the operation, that doesn't work for `=`
 	switch n.Op {
 	case "=":
-		return n.evalAssign(ctx)
+		return nil, n.evalAssign(ctx)
+
 	}
 
 	leftVal, err := n.Left.Eval(ctx)
@@ -104,10 +105,10 @@ func (n *BinaryExpression) Eval(ctx *Javalanche) (Value, error) {
 	return nil, err
 }
 
-func (n *BinaryExpression) evalAssign(ctx *Javalanche) (Value, error) {
+func (n *BinaryExpression) evalAssign(ctx *Javalanche) error {
 	rightVal, err := n.Right.Eval(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if left, ok := n.Left.(SetValuer); ok {
@@ -115,5 +116,5 @@ func (n *BinaryExpression) evalAssign(ctx *Javalanche) (Value, error) {
 	}
 
 	err = fmt.Errorf("operator %q can't be used on %s", n.Op, n.Left)
-	return nil, err
+	return err
 }
