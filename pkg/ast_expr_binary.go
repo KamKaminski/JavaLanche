@@ -24,7 +24,7 @@ func (n *BinaryExpression) String() string {
 	return fmt.Sprintf("%s %s %s", n.Left, n.Op, n.Right)
 }
 
-func (n *BinaryExpression) Eval(ctx *Evaluator) (Value, error) {
+func (n *BinaryExpression) Eval(ctx *Javalanche) (Value, error) {
 	// normally we evaluate both sides before looking at
 	// the operation, that doesn't work for `=`
 	switch n.Op {
@@ -104,7 +104,7 @@ func (n *BinaryExpression) Eval(ctx *Evaluator) (Value, error) {
 	return nil, err
 }
 
-func (n *BinaryExpression) evalAssign(ctx *Evaluator) (Value, error) {
+func (n *BinaryExpression) evalAssign(ctx *Javalanche) (Value, error) {
 	rightVal, err := n.Right.Eval(ctx)
 	if err != nil {
 		return nil, err

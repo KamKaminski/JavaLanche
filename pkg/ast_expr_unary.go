@@ -30,7 +30,7 @@ func (n *UnaryExpression) String() string {
 	}
 }
 
-func (n *UnaryExpression) Eval(ctx *Evaluator) (Value, error) {
+func (n *UnaryExpression) Eval(ctx *Javalanche) (Value, error) {
 	val, err := n.Expr.Eval(ctx)
 	if err != nil {
 		return nil, err

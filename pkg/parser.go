@@ -8,13 +8,13 @@ import (
 type Parser struct {
 	tokenizer *Tokenizer
 	current   *Token
-	evaluator *Evaluator
+	ctx       *Javalanche
 }
 
-func NewParser(tokenizer *Tokenizer, evaluator *Evaluator) *Parser {
+func NewParser(tokenizer *Tokenizer, ctx *Javalanche) *Parser {
 	return &Parser{
 		tokenizer: tokenizer,
-		evaluator: evaluator,
+		ctx:       ctx,
 	}
 }
 

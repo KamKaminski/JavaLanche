@@ -46,7 +46,7 @@ func (n *StringLiteral) AsFloat64() float64 {
 	return v
 }
 
-func (n *StringLiteral) Eval(ctx *Evaluator) (Value, error) {
+func (n *StringLiteral) Eval(ctx *Javalanche) (Value, error) {
 	return n, nil
 }
 

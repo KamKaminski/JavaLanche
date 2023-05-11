@@ -53,7 +53,7 @@ func (n *BooleanLiteral) AsString() string {
 	return n.String()
 }
 
-func (n *BooleanLiteral) Eval(ctx *Evaluator) (Value, error) {
+func (n *BooleanLiteral) Eval(ctx *Javalanche) (Value, error) {
 	return n, nil
 }
 

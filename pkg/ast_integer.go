@@ -53,7 +53,7 @@ func (n *IntegerLiteral) AsBool() bool {
 	return n.Value != 0
 }
 
-func (n *IntegerLiteral) Eval(ctx *Evaluator) (Value, error) {
+func (n *IntegerLiteral) Eval(ctx *Javalanche) (Value, error) {
 	return n, nil
 }
 

@@ -12,17 +12,17 @@ var (
 
 // Javalanche represts Interpreter for Javalanche language
 type Javalanche struct {
-	Evaluator *Evaluator
+	Variable map[string]Value
 }
 
 // New Creates the new instance of Javalanche
 func New() *Javalanche {
 	return &Javalanche{
-		Evaluator: NewEvaluator(),
+		Variable: make(map[string]Value),
 	}
 }
 
 // EvalLine evaluates a line of input
 func (j *Javalanche) EvalLine(s string) (Value, error) {
-	return EvalString(j.Evaluator, s)
+	return EvalString(j, s)
 }

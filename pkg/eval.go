@@ -6,26 +6,14 @@ import (
 	"strings"
 )
 
-// Evaluator struct represents map of the variables
-type Evaluator struct {
-	Variable map[string]Value
-}
-
-// NewEvaluator creates a new Evaluator with an empty variable map
-func NewEvaluator() *Evaluator {
-	return &Evaluator{
-		Variable: make(map[string]Value),
-	}
-}
-
 // SetValue Assigns value to given variable
-func (e *Evaluator) SetValue(name string, v Value) error {
+func (e *Javalanche) SetValue(name string, v Value) error {
 	e.Variable[name] = v
 	return nil
 }
 
 // GetValue retrieves Value of given variable
-func (e *Evaluator) GetValue(name string) (Value, error) {
+func (e *Javalanche) GetValue(name string) (Value, error) {
 	if v, ok := e.Variable[name]; ok {
 		return v, nil
 
@@ -34,7 +22,7 @@ func (e *Evaluator) GetValue(name string) (Value, error) {
 }
 
 // EvalString evaluates expressions
-func EvalString(evaluator *Evaluator, exprs ...string) (Value, error) {
+func EvalString(evaluator *Javalanche, exprs ...string) (Value, error) {
 	var res Value
 
 	for _, expr := range exprs {
@@ -52,17 +40,17 @@ func EvalString(evaluator *Evaluator, exprs ...string) (Value, error) {
 	return res, nil
 }
 
-func evalSingleExpression(evaluator *Evaluator, expr string) (Value, error) {
+func evalSingleExpression(ctx *Javalanche, expr string) (Value, error) {
 	// Since Tokenizer implements the idea of I/O, we need to turn our input into the reader
 	reader := strings.NewReader(expr)
 	lexer := NewTokenizer(reader)
-	parser := NewParser(lexer, evaluator)
+	parser := NewParser(lexer, ctx)
 	ast, err := parser.Parse()
 	if err != nil {
 		return nil, err
 	}
 
-	value, err := ast.Eval(evaluator)
+	value, err := ast.Eval(ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -95,7 +95,7 @@ func TestParserWithContext(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		evaluator := NewEvaluator()
+		evaluator := New()
 		res, err := EvalString(evaluator, tc.exprs...)
 
 		switch {

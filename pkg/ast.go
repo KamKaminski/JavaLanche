@@ -70,7 +70,7 @@ type Value interface {
 }
 
 type Node interface {
-	Eval(ctx *Evaluator) (Value, error)
+	Eval(ctx *Javalanche) (Value, error)
 }
 
 type ValueType int

@@ -53,7 +53,7 @@ func (n *FloatLiteral) AsBool() bool {
 	return n.Value != 0
 }
 
-func (n *FloatLiteral) Eval(ctx *Evaluator) (Value, error) {
+func (n *FloatLiteral) Eval(ctx *Javalanche) (Value, error) {
 	return n, nil
 }
 
