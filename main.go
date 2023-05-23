@@ -4,6 +4,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -62,12 +63,13 @@ func repl(ctx *javalanche.Javalanche) {
 	for {
 		line, err := getline(prompt)
 		switch {
-		case isExit(line):
+		case err == io.EOF || isExit(line):
 			return
 		case err != nil:
 			printError(err)
 			return
 		}
+
 		// evaluate
 		value, err := ctx.EvalLine(line)
 		switch {
