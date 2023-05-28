@@ -54,8 +54,8 @@ func (p *Parser) IsEmpty() bool {
 	return len(p.tokens) == 0
 }
 
-// Pop removes a Token from the queue
-func (p *Parser) Pop() *Token {
+// PopToken removes a Token from the queue
+func (p *Parser) PopToken() *Token {
 	var token *Token
 
 	if len(p.tokens) > 0 {
@@ -66,8 +66,8 @@ func (p *Parser) Pop() *Token {
 	return token
 }
 
-// Push adds a non-nil Token to the stack
-func (p *Parser) Push(token *Token) {
+// PushToken adds a non-nil Token to the stack
+func (p *Parser) PushToken(token *Token) {
 
 	if token != nil {
 		p.tokens = append(p.tokens, token)
@@ -166,10 +166,10 @@ func (p *Parser) parseBooleanExpression() (Node, error) {
 		if p.IsEmpty() {
 			break
 		}
-		top := p.Pop()
+		top := p.PopToken()
 		if top == nil || top.Type != Operator || !(top.Value == "and" || top.Value == "&&" || top.Value == "or" || top.Value == "||") {
 			if top != nil {
-				p.Push(top)
+				p.PushToken(top)
 			}
 			break
 		}
@@ -199,10 +199,10 @@ func (p *Parser) parseAnd() (Node, error) {
 		if p.IsEmpty() {
 			break
 		}
-		top := p.Pop()
+		top := p.PopToken()
 		if top == nil || top.Type != Keyword || !(top.Value == "and" || top.Value == "&&") {
 			if top != nil {
-				p.Push(top)
+				p.PushToken(top)
 			}
 			break
 		}
@@ -232,10 +232,10 @@ func (p *Parser) parseOr() (Node, error) {
 		if p.IsEmpty() {
 			break
 		}
-		top := p.Pop()
+		top := p.PopToken()
 		if top == nil || top.Type != Operator || !(top.Value == "or" || top.Value == "||") {
 			if top != nil {
-				p.Push(top)
+				p.PushToken(top)
 			}
 			break
 		}
@@ -265,10 +265,10 @@ func (p *Parser) parseComparison() (Node, error) {
 		if p.IsEmpty() {
 			break
 		}
-		top := p.Pop()
+		top := p.PopToken()
 		if top == nil || top.Type != Operator || !(top.Value == "==" || top.Value == "!=" || top.Value == "<" || top.Value == ">" || top.Value == "<=" || top.Value == ">=") {
 			if top != nil {
-				p.Push(top)
+				p.PushToken(top)
 			}
 			break
 		}
@@ -298,10 +298,10 @@ func (p *Parser) parseExpression() (Node, error) {
 		if p.IsEmpty() {
 			break
 		}
-		top := p.Pop()
+		top := p.PopToken()
 		if top == nil || top.Type != Operator || !(top.Value == "+" || top.Value == "-") {
 			if top != nil {
-				p.Push(top)
+				p.PushToken(top)
 			}
 			break
 		}
@@ -331,10 +331,10 @@ func (p *Parser) parseTerm() (Node, error) {
 		if p.IsEmpty() {
 			break
 		}
-		top := p.Pop()
+		top := p.PopToken()
 		if top == nil || top.Type != Operator || !(top.Value == "*" || top.Value == "/") {
 			if top != nil {
-				p.Push(top)
+				p.PushToken(top)
 			}
 			break
 		}
@@ -367,7 +367,7 @@ func (p *Parser) parsePrimary() (Node, error) {
 	if p.IsEmpty() {
 		return nil, errors.New("unexpected end of input")
 	}
-	top := p.Pop()
+	top := p.PopToken()
 
 	switch {
 	case top.Is(Operator, "+", "-"):
@@ -432,7 +432,7 @@ func (p *Parser) parseExponent(base Node) (Node, error) {
 	if p.IsEmpty() {
 		return base, nil
 	}
-	top := p.Pop()
+	top := p.PopToken()
 
 	for top.Is(Operator, "^") {
 		op := top.Value
@@ -447,11 +447,11 @@ func (p *Parser) parseExponent(base Node) (Node, error) {
 		if p.IsEmpty() {
 			break
 		}
-		top = p.Pop()
+		top = p.PopToken()
 	}
 
 	if top != nil {
-		p.Push(top)
+		p.PushToken(top)
 	}
 
 	return base, nil
@@ -473,7 +473,7 @@ func (p *Parser) parseAssignment() (Node, error) {
 		}
 		top := p.Peek(1)
 		if top == nil || top.Type != Operator || top.Value != "=" {
-			p.Push(top)
+			p.PushToken(top)
 			break
 		}
 
@@ -483,7 +483,7 @@ func (p *Parser) parseAssignment() (Node, error) {
 		}
 
 		left = &BinaryExpression{Left: left, Op: "=", Right: right}
-		p.Pop()
+		p.PopToken()
 	}
 
 	return left, nil
@@ -522,7 +522,7 @@ func (p *Parser) Eval(_ *Javalanche) (Value, error) {
 
 // ApplyToken pushes tokens onto quee
 func (p *Parser) applyToken(token *Token) {
-	p.Push(token)
+	p.PushToken(token)
 }
 
 // Peek peeks into next token on the queue
