@@ -1,31 +1,19 @@
 package javalanche
 
 import (
-	"bufio"
-	"fmt"
+	"errors"
 	"io"
+	"os"
 	"strings"
-	"unicode"
+	"time"
 )
 
-type TokenType int
-
-const (
-	Unknown TokenType = iota
-	Keyword
-	Identifier
-	Number
-	Operator
-	Separator
-	Boolean
-	String
-	Function
-	Comment
-	LeftParen
-	RightParen
-	EOF
+// Err log
+var (
+	errLexEmitNoArgs = errors.New("emit called without argument")
 )
 
+// Keywords list
 var keywords = []string{
 	"if",
 	"else",
@@ -46,289 +34,135 @@ var keywords = []string{
 	"let",
 }
 
-type Token struct {
-	Type  TokenType
-	Value string
-}
-
+// Tokenizer represents tokenizer
 type Tokenizer struct {
-	reader   *bufio.Reader
-	writer   io.Writer
-	position int
-	buffer   []Token
+	reader *Reader
+	buffer []Token
+
+	outCh  chan *TokenResult
+	closed bool
 }
 
-func isLeftParen(r rune) bool {
-	return r == '('
+// Close closes channel
+func (t *Tokenizer) Close() error {
+	if !t.closed {
+		close(t.outCh)
+		t.closed = true
+	}
+	return nil
 }
 
-func isRightParen(r rune) bool {
-	return r == ')'
-}
-func isFunctionLiteral(code string) bool {
-	return strings.HasPrefix(code, "funx")
+// Results Channels result to target channel
+func (t *Tokenizer) Results() <-chan *TokenResult {
+	return t.outCh
 }
 
-func isBooleanLiteral(code string) bool {
-	return strings.HasPrefix(code, "true") || strings.HasPrefix(code, "false")
-}
-
-func isIdentifierStart(r rune) bool {
-	return unicode.IsLetter(r) || r == '_'
-}
-
-func isIdentifierPart(r rune) bool {
-	return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_'
-}
-
-func isWhitespace(r rune) bool {
-	return unicode.IsSpace(r) || r == '\n'
-}
-
-func isDigit(r rune) bool {
-	return unicode.IsDigit(r)
-}
-
-func isDot(r rune) bool {
-	return r == '.'
-}
-
-func isOperator(code string) bool {
-	return strings.Contains("+-*/%=:<>!&|^", code) || code == "and" || code == "or"
-}
-
-func isSeparator(r rune) bool {
-	return strings.ContainsRune("{}[],;.", r)
-}
-
-func isStringDelimiter(r rune) bool {
-	return r == '"' || r == '\''
-}
-
-func isComment(code string) bool {
-	return strings.HasPrefix(code, "#")
-}
-
-func isKeyword(code string) bool {
-	for _, keyword := range keywords {
-		if keyword == code {
-			return true
+// NextToken reads the output channel to return the next token
+// or error
+func (t *Tokenizer) NextToken(deadline time.Duration) (*Token, error) {
+	select {
+	case result, ok := <-t.outCh:
+		switch {
+		case !ok:
+			return nil, io.EOF
+		case result.Token != nil:
+			return result.Token, nil
+		case result.Err != nil:
+			return nil, result.Err
+		default:
+			// nil, nil
+			panic("unreachable")
 		}
+	case <-time.After(deadline):
+		return nil, os.ErrDeadlineExceeded
 	}
-	return false
 }
 
-func classifyRune(r rune, code string) TokenType {
+// emit emits tokens
+func (t *Tokenizer) emit(res *TokenResult) {
 	switch {
-	case isFunctionLiteral(code):
-		return Function
-	case isBooleanLiteral(code):
-		return Boolean
-	case isIdentifierStart(r):
-		return Identifier
-	case isDigit(r):
-		return Number
-	case isOperator(code):
-		return Operator
-	case isLeftParen(r):
-		return LeftParen
-	case isRightParen(r):
-		return RightParen
-	case isSeparator(r):
-		return Separator
-	case isStringDelimiter(r):
-		return String
-	case isComment(code):
-		return Comment
+	case res == nil:
+		panic(errLexEmitNoArgs)
+	case t.closed:
+		// ignore
 	default:
-		return Unknown
+		t.outCh <- res
 	}
 }
 
-func isValidMultiCharOperator(code string) bool {
-	switch code {
-	case "==", "!=", "<=", ">=", "&&", "||":
-		return true
+// emitErrors emits errors
+func (t *Tokenizer) emitError(err error) {
+	switch {
+	case err == nil:
+		panic(errLexEmitNoArgs)
 	default:
-		return false
-	}
-}
-func (t *Tokenizer) PeekToken() (*Token, error) {
-	token, err := t.NextToken()
-	if err != nil {
-		return nil, err
-	}
-	t.PushBack(token)
-	return token, nil
-}
+		res := &TokenResult{
+			Err: err,
+		}
 
-func (t TokenType) String() string {
-	switch t {
-	case Unknown:
-		return "Unknown"
-	case Keyword:
-		return "Keyword"
-	case Identifier:
-		return "Identifier"
-	case Number:
-		return "Number"
-	case Operator:
-		return "Operator"
-	case Separator:
-		return "Separator"
-	case Boolean:
-		return "Boolean"
-	case String:
-		return "String"
-	case Function:
-		return "Function"
-	case Comment:
-		return "Comment"
-	case LeftParen:
-		return "LeftParen"
-	case RightParen:
-		return "RightParen"
-	default:
-		return "Unknown"
+		t.emit(res)
 	}
 }
 
+// emitValue emits value of the toen and type
+func (t *Tokenizer) emitValue(typ TokenType, val string) {
+	res := &TokenResult{
+		Token: &Token{
+			Type:  typ,
+			Value: val,
+		},
+	}
+
+	t.emit(res)
+}
+
+// emitToken emits whole token
+func (t *Tokenizer) emitToken(typ TokenType) {
+	t.emitValue(typ, t.reader.EmitString())
+}
+
+// NewTokenizer represents newtokenizer
 func NewTokenizer(r io.Reader) *Tokenizer {
 	return &Tokenizer{
-		reader:   bufio.NewReader(r),
-		position: 0,
+		reader: NewReader(r),
+		outCh:  make(chan *TokenResult),
 	}
 }
+
+// PushBack gives us ability to pushback
 func (t *Tokenizer) PushBack(token *Token) {
 	t.buffer = append(t.buffer, *token)
 }
 
+// Run starts tokenizer
 func (t *Tokenizer) Run() {
-	for {
-		token, err := t.NextToken()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			fmt.Fprintf(t.writer, "Error: %v\n", err)
-			break
-		}
+	defer t.Close()
 
-		fmt.Fprintf(t.writer, "Type: %v, Value: %v\n", token.Type.String(), token.Value)
+	for fn := lexText; fn != nil; {
+		fn = fn(t)
 	}
 }
 
-func (t *Tokenizer) NextToken() (*Token, error) {
-	var current strings.Builder
+// accept checks whether rune is valid
+func (t *Tokenizer) accept(valid string) bool {
+	return t.reader.Accept(func(r rune) bool {
+		return strings.ContainsRune(valid, r)
+	})
+}
 
-	for {
-		r, _, err := t.reader.ReadRune()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-		if r == '\n' {
-			continue
-		}
+// acceptFn uses helper functions to check whether rune is valid
+func (t *Tokenizer) acceptFn(match func(rune) bool) bool {
+	return t.reader.Accept(match)
+}
 
-		t.position++
-		code := string(r)
-		tokenType := classifyRune(r, code)
-		switch tokenType {
-		case Identifier:
-			for isIdentifierPart(r) {
-				current.WriteRune(r)
-				r, _, err = t.reader.ReadRune()
-				if err != nil {
-					break
-				}
-			}
-			t.reader.UnreadRune()
+// acceptAll validates run of runes
+func (t *Tokenizer) acceptAll(valid string) bool {
+	return t.reader.AcceptAll(func(r rune) bool {
+		return strings.ContainsRune(valid, r)
+	})
+}
 
-			value := current.String()
-			if isKeyword(value) {
-				tokenType = Keyword
-			} else if value == "and" || value == "or" {
-				tokenType = Operator
-			}
-			return &Token{Type: tokenType, Value: value}, nil
-
-		case Number:
-			for isDigit(r) || isDot(r) {
-				current.WriteRune(r)
-				r, _, err = t.reader.ReadRune()
-				if err != nil {
-					break
-				}
-			}
-			t.reader.UnreadRune()
-
-			return &Token{Type: tokenType, Value: current.String()}, nil
-
-		case Boolean, Function:
-			return &Token{Type: tokenType, Value: code}, nil
-
-		case Operator:
-			current.WriteRune(r)
-			nextR, _, err := t.reader.ReadRune()
-			if err == nil {
-				temp := current.String() + string(nextR)
-				if isValidMultiCharOperator(temp) {
-					current.WriteRune(nextR)
-				} else {
-					t.reader.UnreadRune()
-				}
-			} else {
-				t.reader.UnreadRune()
-			}
-			return &Token{Type: tokenType, Value: current.String()}, nil
-
-		case Separator:
-			return &Token{Type: tokenType, Value: string(r)}, nil
-		case String:
-			delimiter := r
-			code = ""
-			for {
-				r, _, err = t.reader.ReadRune()
-				if err != nil {
-					break
-				}
-				if r == delimiter {
-					break
-				}
-				code += string(r)
-			}
-			return &Token{Type: tokenType, Value: code}, nil
-
-		case Comment:
-			current.WriteRune(r)
-			for {
-				r, _, err = t.reader.ReadRune()
-				if err != nil || r == '\n' {
-					break
-				}
-				current.WriteRune(r)
-			}
-			if err != nil {
-				t.reader.UnreadRune()
-			}
-			return &Token{Type: tokenType, Value: current.String()}, nil
-
-		case LeftParen, RightParen:
-			current.WriteRune(r)
-			return &Token{Type: tokenType, Value: current.String()}, nil
-
-		case Unknown:
-			if isWhitespace(r) {
-				// code = code[1:]
-			} else {
-				// Report the correct position using the `position` variable
-				return nil, fmt.Errorf("invalid character at position %d in remaining code: %s", t.position, code)
-			}
-		}
-	}
-	return nil, io.EOF
-
+// acceptAllFn nvalidates run of runes
+func (t *Tokenizer) acceptAllFn(match func(rune) bool) bool {
+	return t.reader.AcceptAll(match)
 }
