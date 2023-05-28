@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -106,7 +105,7 @@ func (p *Parser) parseTopLevel() (Node, error) {
 func (p *Parser) applyError(err error) bool {
 	var terminate bool
 
-	log.Println("AST.ApplyError:", err)
+	p.Println("applyError:", err)
 
 	switch err {
 	case io.EOF:
@@ -119,7 +118,7 @@ func (p *Parser) applyError(err error) bool {
 
 // ApplyEOL parses tokens whe EOL token is found
 func (p *Parser) applyEOL() {
-	p.PrintDetails()
+	p.PrintDetails("applyEOL")
 
 	for !p.IsEmpty() {
 		token := p.Peek(0)
@@ -499,7 +498,7 @@ func (p *Parser) HasMoreTokens() bool {
 func (p *Parser) applyTimeout() {
 	var result ParserResult
 
-	p.PrintDetails()
+	p.PrintDetails("applyTimeout")
 
 	switch {
 	case p.IsEmpty():
