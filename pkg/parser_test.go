@@ -1,6 +1,7 @@
 package javalanche
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -11,10 +12,26 @@ func TestParserWithContext(t *testing.T) {
 	}
 
 	var cases = []testCase{
+		{
+			exprs:  []string{"3"},
+			result: NewInteger(3),
+		},
 
 		{
-			exprs:  []string{"x = 10", "y = x + 5", "x * y"},
-			result: NewInteger(150),
+			exprs:  []string{"3 - 3"},
+			result: NewInteger(0),
+		},
+		{
+			exprs:  []string{"3 + 3"},
+			result: NewInteger(6),
+		},
+		{
+			exprs:  []string{"3 * 3"},
+			result: NewInteger(9),
+		},
+		{
+			exprs:  []string{"3 * 3 - 2"},
+			result: NewInteger(7),
 		},
 		{
 			exprs:  []string{"x = 3", "y = 4", "x * y"},
@@ -33,10 +50,6 @@ func TestParserWithContext(t *testing.T) {
 			result: NewBoolean(true),
 		},
 		{
-			exprs:  []string{"!(5 - 4 > 3 * 2 == !false)"},
-			result: NewBoolean(true),
-		},
-		{
 			exprs:  []string{"3 == 3"},
 			result: NewBoolean(true),
 		},
@@ -49,7 +62,87 @@ func TestParserWithContext(t *testing.T) {
 			result: NewBoolean(false),
 		},
 		{
-			exprs:  []string{"\"hello\"+ \"world"},
+			exprs:  []string{"x = 10", "x++", "x"},
+			result: NewInteger(11),
+		},
+		{
+			exprs:  []string{"\"a\"+ \"b\""},
+			result: NewString("ab"),
+		},
+		{
+			exprs:  []string{"true and true"},
+			result: NewBoolean(true),
+		},
+		{
+			exprs:  []string{"true && true"},
+			result: NewBoolean(true),
+		},
+		{
+			exprs:  []string{"x = 3", "x++", "x >= 4"},
+			result: NewBoolean(true),
+		},
+		{
+			exprs:  []string{"true == true"},
+			result: NewBoolean(true),
+		},
+		{
+			exprs:  []string{"true != true"},
+			result: NewBoolean(false),
+		},
+		{
+			exprs:  []string{"true != false"},
+			result: NewBoolean(true),
+		},
+		{
+			exprs:  []string{"2 + 3 * 4"},
+			result: NewInteger(14),
+		},
+		{
+			exprs:  []string{"2 + 3 == 5"},
+			result: NewBoolean(true),
+		},
+		{
+			exprs:  []string{"2 + 3 != 5"},
+			result: NewBoolean(false),
+		},
+		{
+			exprs:  []string{"2 + 3 < 5"},
+			result: NewBoolean(false),
+		},
+		{
+			exprs:  []string{"2 +3 > 5"},
+			result: NewBoolean(false),
+		},
+		{
+			exprs:  []string{"2 + 3 >= 5"},
+			result: NewBoolean(true),
+		},
+		{
+			exprs:  []string{"2 + 3 >= 5"},
+			result: NewBoolean(true),
+		},
+		{
+			exprs:  []string{"3 - 4 * 8"},
+			result: NewInteger(-29),
+		},
+		{
+			exprs:  []string{"8+3/3"},
+			result: NewInteger(9),
+		},
+		{
+			exprs:  []string{"x = 10", "x--", "x"},
+			result: NewInteger(9),
+		},
+		{
+			exprs:  []string{"x = 10", "y = x + 5", "x * y"},
+			result: NewInteger(150),
+		},
+		{
+			exprs:  []string{"!true"},
+			result: NewBoolean(false),
+		},
+		{
+			exprs:  []string{"\"hello\"+ \"world\""},
 			result: NewString("helloworld"),
 		},
 		{
@@ -92,23 +185,63 @@ func TestParserWithContext(t *testing.T) {
 			exprs:  []string{"x = 2", "y = 3", "x * y > 6 or x + y < 7"},
 			result: NewBoolean(true),
 		},
+		{
+			exprs:  []string{"!true == !false"},
+			result: NewBoolean(false),
+		},
+		{
+			exprs:  []string{"(123)"},
+			result: NewInteger(123),
+		},
+		{
+			exprs:  []string{"(1 + 2)"},
+			result: NewInteger(3),
+		},
+		{
+			exprs:  []string{"2 + (2 - 3)"},
+			result: NewInteger(1),
+		},
+		{
+			exprs:  []string{"(2 - 3) * 3"},
+			result: NewInteger(-3),
+		},
+		{
+			exprs:  []string{"(1 + 2) == 3"},
+			result: NewBoolean(true),
+		},
+		{
+			exprs:  []string{"(4 * 8) - 3 * 3"},
+			result: NewInteger(23),
+		},
+		{
+			exprs:  []string{"4 - 1 < (3 * 4) - (5 + 3)"},
+			result: NewBoolean(true),
+		},
+		{
+			exprs:  []string{"!(5 - 4 > 3 * 2 == !false)"},
+			result: NewBoolean(true),
+		},
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
 		ctx := New()
+
+		exprs := strings.Join(tc.exprs, "\n")
+		t.Logf("tc[%v]: %q", i, exprs)
+
 		res, err := ctx.EvalLine(tc.exprs...)
 
 		switch {
 		case err != nil && tc.result == nil:
-			t.Logf("PASS: %v: failed as expected: %s", tc.exprs, err)
+			t.Logf("PASS: %q: failed as expected: %s", exprs, err)
 		case err == nil && tc.result == nil:
-			t.Errorf("ERROR: %v: should have failed, got %q instead", tc.exprs, res)
+			t.Errorf("ERROR: %q: should have failed, got %q instead", exprs, res)
 		case err != nil && tc.result != nil:
-			t.Errorf("ERROR: %v: was expected to return %q: %s", tc.exprs, tc.result, err)
+			t.Errorf("ERROR: %q: was expected to return %q: %s", exprs, tc.result, err)
 		case tc.result.Equal(res):
-			t.Logf("PASS: %v → %q", tc.exprs, res)
+			t.Logf("PASS: %q → %q", exprs, res)
 		default:
-			t.Errorf("ERROR: %v: got %q expected %q", tc.exprs, res, tc.result)
+			t.Errorf("ERROR: %q: got %q expected %q", exprs, res, tc.result)
 		}
 	}
 }

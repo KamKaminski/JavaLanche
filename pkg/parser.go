@@ -1,11 +1,8 @@
 package javalanche
 
 import (
-	"errors"
-	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -19,7 +16,7 @@ type Parser struct {
 	tokenizer *Tokenizer
 	ctx       *Javalanche
 	timeout   time.Duration
-	tokens    []*Token
+	stage     Stage
 	result    ParserResult
 	outCh     chan ParserResult
 }
@@ -49,29 +46,60 @@ func (p *Parser) Results() <-chan ParserResult {
 	return p.outCh
 }
 
-// IsEmpty checks if stack is empty
+// IsEmpty checks if the stage is empty
 func (p *Parser) IsEmpty() bool {
-	return len(p.tokens) == 0
+	return p.stage.IsEmpty()
 }
 
-// PopToken removes a Token from the queue
-func (p *Parser) PopToken() *Token {
-	var token *Token
-
-	if len(p.tokens) > 0 {
-		token = p.tokens[0]
-		p.tokens = p.tokens[1:]
+// GetPrecedence function to get the precedence of a token
+func getOperatorPrecedence(op string) int {
+	switch op {
+	case "=":
+		return 0
+	case "or", "||":
+		return 1
+	case "and", "&&":
+		return 2
+	case "==", "!=", "<", ">", "<=", ">=":
+		return 3
+	case "+", "-":
+		return 4
+	case "*", "/":
+		return 5
+	case "^":
+		return 6
+	default:
+		return 8
 	}
-
-	return token
 }
 
-// PushToken adds a non-nil Token to the stack
-func (p *Parser) PushToken(token *Token) {
-
-	if token != nil {
-		p.tokens = append(p.tokens, token)
+func findHighestPrecedenceOperatorInRange(nodes []StageNode, start, end int) (int, *Token) {
+	pivot, op := findHighestPrecedenceOperator(nodes[start:end])
+	if op != nil {
+		return pivot + start, op
 	}
+	return -1, nil
+}
+
+func findHighestPrecedenceOperator(nodes []StageNode) (int, *Token) {
+	var op *Token
+	var maxPrecedence = -1
+	var maxPrecedenceIndex = -1
+
+	for i, node := range nodes {
+		if token, ok := node.Token(); ok {
+			if token.Type == Operator {
+				precedence := getOperatorPrecedence(token.Value)
+				if precedence > maxPrecedence {
+					maxPrecedence = precedence
+					maxPrecedenceIndex = i
+					op = token
+				}
+			}
+		}
+	}
+
+	return maxPrecedenceIndex, op
 }
 
 // Run starts the parser
@@ -96,11 +124,6 @@ func (p *Parser) Run() {
 	}
 }
 
-// ParseTopLevel parsest higher level of recursion
-func (p *Parser) parseTopLevel() (Node, error) {
-	return p.parseAssignment()
-}
-
 // ApplyError applies correct error
 func (p *Parser) applyError(err error) bool {
 	var terminate bool
@@ -120,378 +143,26 @@ func (p *Parser) applyError(err error) bool {
 func (p *Parser) applyEOL() {
 	p.PrintDetails("applyEOL")
 
-	for !p.IsEmpty() {
-		token := p.Peek(0)
-		var node Node
-		var err error
+	node, err := p.stage.Parse()
+	if err != nil {
+		// Fail to parse
+		p.Println("applyEOL:", "Stage.Parse:", "err:", err)
+		p.result = ParserResult{nil, err}
+		return
+	}
 
-		switch {
-		case token.Type == Identifier:
-			node, err = p.parseAssignment()
-		case token.Type == Boolean:
-			node, err = p.parseBooleanExpression()
-		default:
-			node, err = p.parseTopLevel()
-		}
+	p.Println("applyEOL:", "Stage.Parse:", node)
 
-		if err != nil {
-			// Fail to parse
-			p.result = ParserResult{nil, err}
-			return
-		}
-
-		// Call Eval directly on each Node
-		value, err := node.Eval(p.ctx)
-
-		if err != nil {
-			p.result = ParserResult{nil, err}
-			continue
-		}
-
+	// Call Eval directly on each Node
+	value, err := node.Eval(p.ctx)
+	switch {
+	case err != nil:
+		p.Println("applyEOL:", node, "→ err:", err)
+		p.result = ParserResult{nil, err}
+	default:
+		p.Println("applyEOL:", node, "→", value)
 		p.result = ParserResult{value, nil}
 	}
-}
-
-// ParseBooleanExpression parses bool's
-func (p *Parser) parseBooleanExpression() (Node, error) {
-	if p.IsEmpty() {
-		return nil, errors.New("unexpected end of input")
-	}
-	left, err := p.parseOr()
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		if p.IsEmpty() {
-			break
-		}
-		top := p.PopToken()
-		if top == nil || top.Type != Operator || !(top.Value == "and" || top.Value == "&&" || top.Value == "or" || top.Value == "||") {
-			if top != nil {
-				p.PushToken(top)
-			}
-			break
-		}
-
-		op := top.Value
-		right, err := p.parseOr()
-		if err != nil {
-			return nil, err
-		}
-		left = &BinaryExpression{Left: left, Op: op, Right: right}
-	}
-
-	return left, nil
-}
-
-// ParseAnd parses logical and
-func (p *Parser) parseAnd() (Node, error) {
-	if p.IsEmpty() {
-		return nil, errors.New("unexpected end of input")
-	}
-	left, err := p.parseComparison()
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		if p.IsEmpty() {
-			break
-		}
-		top := p.PopToken()
-		if top == nil || top.Type != Keyword || !(top.Value == "and" || top.Value == "&&") {
-			if top != nil {
-				p.PushToken(top)
-			}
-			break
-		}
-
-		op := top.Value
-		right, err := p.parseComparison()
-		if err != nil {
-			return nil, err
-		}
-		left = &BinaryExpression{Left: left, Op: op, Right: right}
-	}
-
-	return left, nil
-}
-
-// ParseOr parses logical or
-func (p *Parser) parseOr() (Node, error) {
-	if p.IsEmpty() {
-		return nil, errors.New("unexpected end of input")
-	}
-	left, err := p.parseAnd()
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		if p.IsEmpty() {
-			break
-		}
-		top := p.PopToken()
-		if top == nil || top.Type != Operator || !(top.Value == "or" || top.Value == "||") {
-			if top != nil {
-				p.PushToken(top)
-			}
-			break
-		}
-
-		op := top.Value
-		right, err := p.parseAnd()
-		if err != nil {
-			return nil, err
-		}
-		left = &BinaryExpression{Left: left, Op: op, Right: right}
-	}
-
-	return left, nil
-}
-
-// ParseComparison parses comparison
-func (p *Parser) parseComparison() (Node, error) {
-	if p.IsEmpty() {
-		return nil, errors.New("unexpected end of input")
-	}
-	left, err := p.parseExpression()
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		if p.IsEmpty() {
-			break
-		}
-		top := p.PopToken()
-		if top == nil || top.Type != Operator || !(top.Value == "==" || top.Value == "!=" || top.Value == "<" || top.Value == ">" || top.Value == "<=" || top.Value == ">=") {
-			if top != nil {
-				p.PushToken(top)
-			}
-			break
-		}
-
-		op := top.Value
-		right, err := p.parseExpression()
-		if err != nil {
-			return nil, err
-		}
-		left = &BinaryExpression{Left: left, Op: op, Right: right}
-	}
-
-	return left, nil
-}
-
-// ParseExpression parses expressions
-func (p *Parser) parseExpression() (Node, error) {
-	if p.IsEmpty() {
-		return nil, errors.New("unexpected end of input")
-	}
-	left, err := p.parseTerm()
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		if p.IsEmpty() {
-			break
-		}
-		top := p.PopToken()
-		if top == nil || top.Type != Operator || !(top.Value == "+" || top.Value == "-") {
-			if top != nil {
-				p.PushToken(top)
-			}
-			break
-		}
-
-		op := top.Value
-		right, err := p.parseTerm()
-		if err != nil {
-			return nil, err
-		}
-		left = &BinaryExpression{Left: left, Op: op, Right: right}
-	}
-
-	return left, nil
-}
-
-// ParseTerm parses */
-func (p *Parser) parseTerm() (Node, error) {
-	if p.IsEmpty() {
-		return nil, errors.New("unexpected end of input")
-	}
-	left, err := p.parseFactor()
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		if p.IsEmpty() {
-			break
-		}
-		top := p.PopToken()
-		if top == nil || top.Type != Operator || !(top.Value == "*" || top.Value == "/") {
-			if top != nil {
-				p.PushToken(top)
-			}
-			break
-		}
-
-		op := top.Value
-		right, err := p.parseFactor()
-		if err != nil {
-			return nil, err
-		}
-		left = &BinaryExpression{Left: left, Op: op, Right: right}
-	}
-
-	return left, nil
-}
-
-// ParseFactor parses factorail
-func (p *Parser) parseFactor() (Node, error) {
-	if p.IsEmpty() {
-		return nil, errors.New("unexpected end of input")
-	}
-	base, err := p.parsePrimary()
-	if err != nil {
-		return nil, err
-	}
-	return p.parseExponent(base)
-}
-
-// ParsePrimary parses primary operations
-func (p *Parser) parsePrimary() (Node, error) {
-	if p.IsEmpty() {
-		return nil, errors.New("unexpected end of input")
-	}
-	top := p.PopToken()
-
-	switch {
-	case top.Is(Operator, "+", "-"):
-		op := top.Value
-
-		factor, err := p.parsePrimary()
-		if err != nil {
-			return nil, err
-		}
-
-		if op == "-" {
-			return &BinaryExpression{
-				Op:    "*",
-				Left:  NewFloat(-1),
-				Right: factor,
-			}, nil
-		}
-
-		return factor, nil
-	case top.Is(Boolean, "true", "false"):
-		value := top.Value == "true"
-		return NewBoolean(value), nil
-	case top.Is(Identifier):
-		name := top.Value
-		return &Variable{Name: name}, nil
-	case top.Is(Integer):
-		intVal, intErr := strconv.Atoi(top.Value)
-		if intErr == nil {
-			return &IntegerLiteral{Value: intVal}, nil
-		}
-	case top.Is(Float):
-		floatVal, floatErr := strconv.ParseFloat(top.Value, 64)
-		if floatErr != nil {
-			return nil, floatErr
-		}
-		return &FloatLiteral{Value: floatVal}, nil
-	case top.Is(LeftParen):
-		expr, err := p.parseBooleanExpression()
-		if err != nil {
-			return nil, err
-		}
-		if top.Type != RightParen {
-			return nil, errors.New("missing closing right paren")
-		}
-		return expr, nil
-	case top.Is(Operator, "!"):
-		expr, err := p.parsePrimary()
-		if err != nil {
-			return nil, err
-		}
-		return &UnaryExpression{Op: "!", Expr: expr}, nil
-	case top.Is(String):
-		value := top.Value
-		return &StringLiteral{Value: value}, nil
-	}
-
-	return nil, fmt.Errorf("unexpected token: %v", top.Value)
-}
-
-// ParseExponent parses exponents
-func (p *Parser) parseExponent(base Node) (Node, error) {
-	if p.IsEmpty() {
-		return base, nil
-	}
-	top := p.PopToken()
-
-	for top.Is(Operator, "^") {
-		op := top.Value
-
-		exponent, err := p.parseFactor()
-		if err != nil {
-			return nil, err
-		}
-
-		base = &BinaryExpression{Left: base, Op: op, Right: exponent}
-
-		if p.IsEmpty() {
-			break
-		}
-		top = p.PopToken()
-	}
-
-	if top != nil {
-		p.PushToken(top)
-	}
-
-	return base, nil
-}
-
-// ParseAssignment parses assigments
-func (p *Parser) parseAssignment() (Node, error) {
-	if p.IsEmpty() {
-		return nil, errors.New("unexpected end of input")
-	}
-	left, err := p.parseBooleanExpression()
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		if p.IsEmpty() {
-			break
-		}
-		top := p.Peek(1)
-		if top == nil || top.Type != Operator || top.Value != "=" {
-			p.PushToken(top)
-			break
-		}
-
-		right, err := p.parseBooleanExpression()
-		if err != nil {
-			return nil, err
-		}
-
-		left = &BinaryExpression{Left: left, Op: "=", Right: right}
-		p.PopToken()
-	}
-
-	return left, nil
-}
-
-// HasMoreTokens checks for more tokens in the tokens queue
-func (p *Parser) HasMoreTokens() bool {
-	return len(p.tokens) > 0
 }
 
 // ApplyTimeout appplies timeout
@@ -522,26 +193,7 @@ func (p *Parser) Eval(_ *Javalanche) (Value, error) {
 
 // ApplyToken pushes tokens onto quee
 func (p *Parser) applyToken(token *Token) {
-	p.PushToken(token)
-}
-
-// Peek peeks into next token on the queue
-func (p *Parser) Peek(index int) *Token {
-	var token *Token
-	var i int
-
-	switch {
-	case index < 0:
-		// reverse
-		i = len(p.tokens) + index
-		if i >= 0 {
-			token = p.tokens[i]
-		}
-	case index < len(p.tokens):
-		// found
-		i = index
-		token = p.tokens[index]
+	if token != nil {
+		p.stage.AppendTokens(token)
 	}
-
-	return token
 }

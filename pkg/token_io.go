@@ -155,13 +155,6 @@ func (t *Tokenizer) acceptFn(match func(rune) bool) bool {
 	return t.reader.Accept(match)
 }
 
-// acceptAll validates run of runes
-func (t *Tokenizer) acceptAll(valid string) bool {
-	return t.reader.AcceptAll(func(r rune) bool {
-		return strings.ContainsRune(valid, r)
-	})
-}
-
 // acceptAllFn nvalidates run of runes
 func (t *Tokenizer) acceptAllFn(match func(rune) bool) bool {
 	return t.reader.AcceptAll(match)

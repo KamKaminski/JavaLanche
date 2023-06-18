@@ -3,6 +3,7 @@ package javalanche
 import (
 	"fmt"
 	"math"
+	"strconv"
 )
 
 var (
@@ -27,6 +28,16 @@ type FloatLiteral struct {
 
 func NewFloat(n float64) *FloatLiteral {
 	return &FloatLiteral{Value: n}
+}
+
+// NewFloatString converts string value into float value
+func NewFloatString(s string) (*FloatLiteral, error) {
+	floatVal, err := strconv.ParseFloat(s, 64)
+	if err == nil {
+		return &FloatLiteral{Value: floatVal}, nil
+	}
+
+	return nil, &ErrInvalidValue{s}
 }
 
 func (n *FloatLiteral) GoString() string {

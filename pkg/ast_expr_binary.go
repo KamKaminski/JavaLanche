@@ -21,7 +21,7 @@ func (n *BinaryExpression) GoString() string {
 }
 
 func (n *BinaryExpression) String() string {
-	return fmt.Sprintf("%s %s %s", n.Left, n.Op, n.Right)
+	return fmt.Sprintf("(%s %s %s)", n.Left, n.Op, n.Right)
 }
 
 func (n *BinaryExpression) Eval(ctx *Javalanche) (Value, error) {

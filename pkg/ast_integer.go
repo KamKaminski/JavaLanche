@@ -3,6 +3,7 @@ package javalanche
 import (
 	"fmt"
 	"math"
+	"strconv"
 )
 
 var (
@@ -27,6 +28,15 @@ type IntegerLiteral struct {
 
 func NewInteger(n int) *IntegerLiteral {
 	return &IntegerLiteral{Value: n}
+}
+
+func NewIntegerString(s string) (*IntegerLiteral, error) {
+	intVal, err := strconv.Atoi(s)
+	if err == nil {
+		return &IntegerLiteral{Value: intVal}, nil
+	}
+
+	return nil, &ErrInvalidValue{s}
 }
 
 func (n *IntegerLiteral) GoString() string {

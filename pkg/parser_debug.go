@@ -9,7 +9,7 @@ const doDebug = false
 
 func (p *Parser) Println(args ...any) {
 	if doDebug && len(args) > 0 {
-		log.Println(append([]any{"Parser:"}, args...))
+		log.Println(append([]any{"Parser:"}, args...)...)
 	}
 }
 
@@ -38,19 +38,17 @@ func (p *Parser) PrintDetails(msg string, args ...any) {
 		log.Println("Parser:", msg)
 	}
 
-	// tokens
-	l := len(p.tokens)
-	switch l {
-	case 0:
+	// stage
+	switch {
+	case p.stage.IsEmpty():
 		log.Printf("%s:%s: %s",
-			"Parser", "tokens", "-empty-")
+			"Parser", "Stage", "-empty-")
 	default:
-		for i, t := range p.tokens {
-			log.Printf("%s:%s: [%v/%v] %#v",
-				"Parser", "tokens", i, l, t)
+		for _, line := range p.stage.Strings() {
+			log.Println("Parser:", line)
 		}
 	}
 
 	// result
-	log.Printf("%s:%s: %#v", "Parser", "result", p.result)
+	log.Printf("%s %s %#v", "Parser:", "result:", p.result)
 }

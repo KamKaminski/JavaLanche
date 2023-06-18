@@ -8,7 +8,7 @@ import (
 // Alphabet used within JaVaLanche lexer
 const (
 	asciiLetterRunes        = "abcdefghijklmnopqrstuvwxyz"
-	operatorWithSecondRunes = "&|=<>!"
+	operatorWithSecondRunes = "&|=<>!+-"
 	operatorStartRunes      = operatorWithSecondRunes + "+-*/%:^"
 	punctuationRunes        = "()\n"
 )
@@ -76,6 +76,8 @@ func isOperatorPair(r1 rune, r2 rune) bool {
 		return true
 	case "&&", "||":
 		return true
+	case "++", "--":
+		return true
 	default:
 		return false
 	}
@@ -114,4 +116,34 @@ func isKeyword(code string) bool {
 		}
 	}
 	return false
+}
+
+// isBinaryOperator checks if the strings is a binary operator
+func isBinaryOperator(code string) bool {
+	switch code {
+	case "+", "-", "*", "/", "==", "!=", ">", "<", ">=", "<=", "&&", "||", "^", "=", "and", "or":
+		return true
+	default:
+		return false
+	}
+}
+
+// isPrefixUnaryOperator checks if the strings is a prefix unary operator
+func isPrefixUnaryOperator(code string) bool {
+	switch code {
+	case "!":
+		return true
+	default:
+		return false
+	}
+}
+
+// isSuffixUnaryOperator checks if the strings is a suffix unary operator
+func isSuffixUnaryOperator(code string) bool {
+	switch code {
+	case "++", "--":
+		return true
+	default:
+		return false
+	}
 }

@@ -2,6 +2,7 @@ package javalanche
 
 import (
 	"fmt"
+	"strings"
 )
 
 var (
@@ -21,6 +22,17 @@ type BooleanLiteral struct {
 
 func NewBoolean(v bool) *BooleanLiteral {
 	return &BooleanLiteral{Value: v}
+}
+
+func NewBooleanString(s string) (*BooleanLiteral, error) {
+	switch strings.ToLower(s) {
+	case "true":
+		return &BooleanLiteral{Value: true}, nil
+	case "false":
+		return &BooleanLiteral{Value: false}, nil
+	default:
+		return nil, &ErrInvalidValue{s}
+	}
 }
 
 func (n *BooleanLiteral) GoString() string {

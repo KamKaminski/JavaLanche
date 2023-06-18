@@ -74,6 +74,18 @@ func (t Token) GoString() string {
 	}
 }
 
+func (t Token) String() string {
+	s := t.Type.String()
+	switch {
+	case s == "Unknown":
+		return fmt.Sprintf("%s%v(%q)",
+			s, int(t.Type), t.Value)
+	default:
+		return fmt.Sprintf("%s(%q)",
+			s, t.Value)
+	}
+}
+
 // IsType checks if the token has the specified type
 // and offers special
 func (t Token) IsType(typ TokenType) bool {
