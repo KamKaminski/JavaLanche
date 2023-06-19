@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/mattn/go-isatty"
 
 	javalanche "javalanche/pkg"
 )
@@ -53,7 +54,12 @@ func isExit(line string) bool {
 // Main creates new context
 func main() {
 	ctx := javalanche.New()
-	repl(ctx)
+
+	if isatty.IsTerminal(os.Stdin.Fd()) {
+		repl(ctx)
+	} else {
+		replNonTTY(ctx)
+	}
 }
 
 // Repl allows user to interact with the program
@@ -88,5 +94,23 @@ func repl(ctx *javalanche.Javalanche) {
 			// silent statement
 			prompt = true
 		}
+	}
+}
+
+// replNonTTY spawns console in a case of main console being non tty
+func replNonTTY(ctx *javalanche.Javalanche) {
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		value, err := ctx.EvalLine(line)
+		if err != nil {
+			printError(err)
+		} else if value != nil {
+			printResult(value)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		printError(err)
 	}
 }
