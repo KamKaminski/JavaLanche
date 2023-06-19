@@ -15,6 +15,7 @@ var (
 	_ SubValuer          = (*FloatLiteral)(nil)
 	_ MulValuer          = (*FloatLiteral)(nil)
 	_ DivValuer          = (*FloatLiteral)(nil)
+	_ NegValuer          = (*FloatLiteral)(nil)
 	_ UpValuer           = (*FloatLiteral)(nil)
 	_ GreaterEqualValuer = (*FloatLiteral)(nil)
 	_ LesserEqualValuer  = (*FloatLiteral)(nil)
@@ -139,6 +140,10 @@ func (n *FloatLiteral) MulValue(v Value) (Value, error) {
 	default:
 		return nil, errInvalidTypes
 	}
+}
+
+func (n *FloatLiteral) NegValue() (Value, error) {
+	return NewFloat(-n.Value), nil
 }
 
 func (n *FloatLiteral) UpValue(v Value) (Value, error) {

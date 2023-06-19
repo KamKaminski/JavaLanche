@@ -266,34 +266,32 @@ func (s *Stage) parseRange(start, end int) error {
 		return &ErrInvalidToken{}
 	}
 
-	s.Println("parseUnbracketed:", "op:", op)
+	s.Println("parseUnbracketed:", "op:", op, "at", pivot)
 	switch {
-	case isBinaryOperator(op.Value):
-		// ... before op after ...
-		before, err := s.getNodeBefore(pivot)
-		if err != nil {
-			return err
-		}
-
-		after, err := s.getNodeAfter(pivot)
-		if err != nil {
-			return err
-		}
-
-		n := &BinaryExpression{
-			Left:  before,
-			Op:    op.Value,
-			Right: after,
-		}
-
-		s.Printf("parseUnbracketed: pivot:%v [%s %s %s] → %s", pivot, before, op, after, n)
-		s.replaceRange(n, pivot-1, pivot+1)
-		return nil
 	case isPrefixUnaryOperator(op.Value):
 		// ... op after ...
 		after, err := s.getNodeAfter(pivot)
 		if err != nil {
 			return err
+		}
+
+		// could we be on a binary instead?
+		if isBinaryOperator(op.Value) {
+			before, err := s.getNodeBefore(pivot)
+			if err == nil {
+				// ... before op after ...
+				n := &BinaryExpression{
+					Left:  before,
+					Op:    op.Value,
+					Right: after,
+				}
+
+				s.Printf("parseUnbracketed: pivot:%v [%s %s %s] → %s", pivot, before, op, after, n)
+				s.replaceRange(n, pivot-1, pivot+1)
+				return nil
+			}
+
+			// nope, continue as prefixed unary
 		}
 
 		n := &UnaryExpression{
@@ -319,6 +317,28 @@ func (s *Stage) parseRange(start, end int) error {
 		s.Printf("parseUnbracketed: pivot:%v [%s %s] → %s", pivot, before, op, n)
 		s.replaceRange(n, pivot-1, pivot)
 		return nil
+	case isBinaryOperator(op.Value):
+		// ... before op after ...
+		before, err := s.getNodeBefore(pivot)
+		if err != nil {
+			return err
+		}
+
+		after, err := s.getNodeAfter(pivot)
+		if err != nil {
+			return err
+		}
+
+		n := &BinaryExpression{
+			Left:  before,
+			Op:    op.Value,
+			Right: after,
+		}
+
+		s.Printf("parseUnbracketed: pivot:%v [%s %s %s] → %s", pivot, before, op, after, n)
+		s.replaceRange(n, pivot-1, pivot+1)
+		return nil
+
 	default:
 		return fmt.Errorf("unsupported operator: %s", op.Value)
 	}

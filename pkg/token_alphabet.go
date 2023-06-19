@@ -131,7 +131,7 @@ func isBinaryOperator(code string) bool {
 // isPrefixUnaryOperator checks if the strings is a prefix unary operator
 func isPrefixUnaryOperator(code string) bool {
 	switch code {
-	case "!":
+	case "!", "+", "-":
 		return true
 	default:
 		return false

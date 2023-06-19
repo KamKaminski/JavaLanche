@@ -39,6 +39,10 @@ type DivValuer interface {
 	DivValue(Value) (Value, error)
 }
 
+type NegValuer interface {
+	NegValue() (Value, error)
+}
+
 // UpValuer provides up interface
 type UpValuer interface {
 	UpValue(Value) (Value, error)

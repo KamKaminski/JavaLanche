@@ -58,6 +58,13 @@ func (n *UnaryExpression) Eval(ctx *Javalanche) (Value, error) {
 		if left, ok := val.(LogicalNotValuer); ok {
 			return left.LogicalNotValue()
 		}
+	case "-":
+		if v, ok := val.(NegValuer); ok {
+			return v.NegValue()
+		}
+	case "+":
+		// NO-OP
+		return val, nil
 	}
 
 	err = fmt.Errorf("operator %q can't be used on %s", n.Op, val)

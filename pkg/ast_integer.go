@@ -15,6 +15,7 @@ var (
 	_ SubValuer         = (*IntegerLiteral)(nil)
 	_ MulValuer         = (*IntegerLiteral)(nil)
 	_ DivValuer         = (*IntegerLiteral)(nil)
+	_ NegValuer         = (*IntegerLiteral)(nil)
 	_ UpValuer          = (*IntegerLiteral)(nil)
 	_ GreaterValuer     = (*IntegerLiteral)(nil)
 	_ LesserEqualValuer = (*IntegerLiteral)(nil)
@@ -135,6 +136,10 @@ func (n *IntegerLiteral) MulValue(v Value) (Value, error) {
 	default:
 		return nil, errInvalidTypes
 	}
+}
+
+func (n *IntegerLiteral) NegValue() (Value, error) {
+	return NewInteger(-n.Value), nil
 }
 
 func (n *IntegerLiteral) UpValue(v Value) (Value, error) {
