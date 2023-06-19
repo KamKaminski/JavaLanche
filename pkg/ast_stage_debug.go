@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const debugStage = true
+var debugStage = false
 
 // Println provides custom logging
 func (s *Stage) Println(args ...any) {

@@ -223,25 +223,49 @@ func TestParserWithContext(t *testing.T) {
 		},
 	}
 
-	for i, tc := range cases {
-		ctx := New()
+	for _, tc := range cases {
+		var retrying bool
 
-		exprs := strings.Join(tc.exprs, "\n")
-		t.Logf("tc[%v]: %q", i, exprs)
+	retryLoop:
+		for {
+			var failed bool
 
-		res, err := ctx.EvalLine(tc.exprs...)
+			ctx := New()
 
-		switch {
-		case err != nil && tc.result == nil:
-			t.Logf("PASS: %q: failed as expected: %s", exprs, err)
-		case err == nil && tc.result == nil:
-			t.Errorf("ERROR: %q: should have failed, got %q instead", exprs, res)
-		case err != nil && tc.result != nil:
-			t.Errorf("ERROR: %q: was expected to return %q: %s", exprs, tc.result, err)
-		case tc.result.Equal(res):
-			t.Logf("PASS: %q → %q", exprs, res)
-		default:
-			t.Errorf("ERROR: %q: got %q expected %q", exprs, res, tc.result)
+			exprs := strings.Join(tc.exprs, "\n")
+			res, err := ctx.EvalLine(tc.exprs...)
+
+			switch {
+			case err != nil && tc.result == nil:
+				t.Logf("PASS: %q: failed as expected: %s", exprs, err)
+			case err == nil && tc.result == nil:
+				failed = true
+				t.Errorf("ERROR: %q: should have failed, got %q instead", exprs, res)
+			case err != nil && tc.result != nil:
+				failed = true
+				t.Errorf("ERROR: %q: was expected to return %q: %s", exprs, tc.result, err)
+			case tc.result.Equal(res):
+				t.Logf("PASS: %q → %q", exprs, res)
+			default:
+				failed = true
+				t.Errorf("ERROR: %q: got %q expected %q", exprs, res, tc.result)
+			}
+
+			switch {
+			case !failed:
+				// PASS
+				debugStage = false
+				retrying = false
+				break retryLoop
+			case retrying:
+				// not again
+				debugStage = false
+				break retryLoop
+			default:
+				// oops, again but with logs
+				debugStage = true
+				retrying = true
+			}
 		}
 	}
 }
