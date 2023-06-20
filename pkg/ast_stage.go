@@ -299,12 +299,13 @@ func (s *Stage) parseRange(start, end int) error {
 			Expr: after,
 		}
 
-		s.Printf("parseUnbracketed: pivot:%v [%s %s] → %s", pivot, op, after, n)
+		s.Printf("parseUnbracketed: [%s %s] → %s", op, after, n)
 		s.replaceRange(n, pivot, pivot+1)
 		return nil
 	case isSuffixUnaryOperator(op.Value):
 		// ... before op ...
 		before, err := s.getNodeBefore(pivot)
+
 		if err != nil {
 			return err
 		}
@@ -314,7 +315,7 @@ func (s *Stage) parseRange(start, end int) error {
 			Op:   op.Value,
 		}
 
-		s.Printf("parseUnbracketed: pivot:%v [%s %s] → %s", pivot, before, op, n)
+		s.Printf("parseUnbracketed: [%s %s] → %s", before, op, n)
 		s.replaceRange(n, pivot-1, pivot)
 		return nil
 	case isBinaryOperator(op.Value):

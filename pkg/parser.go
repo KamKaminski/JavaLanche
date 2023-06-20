@@ -55,21 +55,29 @@ func (p *Parser) IsEmpty() bool {
 func getOperatorPrecedence(op string) int {
 	switch op {
 	case "=":
-		return 0
-	case "or", "||":
 		return 1
-	case "and", "&&":
+	case "or", "||":
 		return 2
-	case "==", "!=", "<", ">", "<=", ">=":
+	case "and", "&&":
 		return 3
-	case "+", "-":
+	case "==":
 		return 4
-	case "*", "/":
+	case "!=":
 		return 5
-	case "^":
+	case "<", ">", "<=", ">=":
 		return 6
-	default:
+	case "+":
+		return 7
+	case "-":
 		return 8
+	case "*", "/":
+		return 9
+	case "^":
+		return 10
+	case "!":
+		return 11
+	default:
+		return 12
 	}
 }
 
@@ -90,7 +98,9 @@ func findHighestPrecedenceOperator(nodes []StageNode) (int, *Token) {
 		if token, ok := node.Token(); ok {
 			if token.Type == Operator {
 				precedence := getOperatorPrecedence(token.Value)
-				if precedence > maxPrecedence {
+				if precedence >= maxPrecedence {
+					// last wins, because some binary operators
+					// are also prefixed unary operators
 					maxPrecedence = precedence
 					maxPrecedenceIndex = i
 					op = token

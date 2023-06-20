@@ -34,6 +34,22 @@ func TestParserWithContext(t *testing.T) {
 			result: NewInteger(7),
 		},
 		{
+			exprs:  []string{"-2"},
+			result: NewInteger(-2),
+		},
+		{
+			exprs:  []string{"-2 + 3"},
+			result: NewInteger(1),
+		},
+		{
+			exprs:  []string{"2 + -3"},
+			result: NewInteger(-1),
+		},
+		{
+			exprs:  []string{"2 - -3"},
+			result: NewInteger(5),
+		},
+		{
 			exprs:  []string{"x = 3", "y = 4", "x * y"},
 			result: NewInteger(12),
 		},
