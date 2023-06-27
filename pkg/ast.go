@@ -73,6 +73,9 @@ type LesserEqualValuer interface {
 type LogicalNotValuer interface {
 	LogicalNotValue() (Value, error)
 }
+type ModValuer interface {
+	ModValue(Value) (Value, error)
+}
 
 // Value represents value interface
 type Value interface {

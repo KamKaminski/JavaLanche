@@ -260,10 +260,178 @@ func (s *Stage) parseUnbracketed() error {
 	return s.parseRange(0, len(s.nodes))
 }
 
+func (s *Stage) parseKeywords(start, end int) error {
+	lastOpen := ""
+	lastOpenIndex := -1
+
+	s.PrintDetails("parseKeywords %v..%v", start, end)
+	for i, n := range s.nodes[start:end] {
+		if t, ok := n.Token(); ok && t.Type == Keyword {
+			switch t.Value {
+			case "if", "for":
+				// open
+				switch {
+				case lastOpen == "":
+					// first
+					lastOpen = t.Value
+					lastOpenIndex = i
+				default:
+					// nested
+					return s.parseKeywords(start+i, end)
+				}
+			case "end":
+				switch {
+				case lastOpenIndex == -1:
+					// unexpected
+					return &ErrInvalidToken{
+						Token:  t,
+						Reason: "unexpected",
+					}
+				default:
+					// parse complete keyword block
+					return s.parseKeyword(start+lastOpenIndex, start+i+1)
+				}
+			case "elif", "else":
+				// elif and else can only come after if or elif
+				switch lastOpen {
+				case "if", "elif":
+					// remember and continue
+					lastOpen = t.Value
+				default:
+					// unexpected
+					return &ErrInvalidToken{
+						Token:  t,
+						Reason: "unexpected",
+					}
+				}
+			default:
+				// unexpected
+				return &ErrInvalidToken{
+					Token:  t,
+					Reason: "unexpected",
+				}
+			}
+		}
+	}
+
+	return ErrMoreData
+}
+
+func (s *Stage) parseKeyword(start, end int) error {
+	token, ok := s.nodes[start].Token()
+	if ok {
+		switch token.Value {
+		case "if":
+			return s.parseIfKeyword(start, end)
+		case "for":
+			return s.parseForKeyword(start, end)
+		}
+	}
+
+	return &ErrInvalidToken{
+		Token:  token,
+		Reason: "unexpected",
+	}
+}
+
+// parseForKeyword parses loops
+func (s *Stage) parseForKeyword(start, end int) error {
+	var body BodyNode
+	var result ForNode
+
+	s.PrintDetails("parseForKetword %v..%v", start, end)
+	for _, n := range s.nodes[start+1 : end] {
+		if result.Condition == nil {
+			// needs condition
+			cond, ok := n.Node()
+			if !ok {
+				return &ErrInvalidToken{}
+			}
+			result.Condition = cond
+		} else if t, ok := n.Token(); ok && t.Type == Keyword {
+			switch t.Value {
+			case "end":
+				result.Body = body
+				// done
+				s.replaceRange(&result, start, end-1)
+				return nil
+			default:
+				panic("unreachable")
+			}
+		} else if node, ok := n.Node(); ok {
+			body = append(body, node)
+		} else {
+			panic("unreachable")
+		}
+	}
+
+	panic("unreachable")
+}
+
+// parseIfKeyword parses if logic
+func (s *Stage) parseIfKeyword(start, end int) error {
+	var body BodyNode
+
+	result := &IfElseNode{}
+	n1 := result
+
+	s.PrintDetails("parseIfKeywords %v..%v", start, end)
+	for _, n := range s.nodes[start+1 : end] {
+		//
+		if n1.Condition == nil {
+			// needs condition
+			cond, ok := n.Node()
+			if !ok {
+				return &ErrInvalidToken{}
+			}
+
+			n1.Condition = cond
+			body = []Node{}
+		} else if t, ok := n.Token(); ok && t.Type == Keyword {
+			// sub-keyword
+			switch t.Value {
+			case "else":
+				// body is the TrueBody
+				n1.TrueBody = body
+				// and prepare for FalseBody
+				body = []Node{}
+			case "elif":
+				// body is the TrueBody
+				n1.TrueBody = body
+				// falseBody a new subcondition
+				n2 := &IfElseNode{}
+				n1.FalseBody = n2
+				// and this new subcondition is now active
+				n1 = n2
+			case "end":
+				if n1.TrueBody == nil {
+					n1.TrueBody = body
+				} else {
+					n1.FalseBody = body
+				}
+
+				// done
+				s.replaceRange(result, start, end-1)
+				return nil
+			default:
+				panic("unreachable")
+			}
+		} else if node, ok := n.Node(); ok {
+			// append to body
+			body = append(body, node)
+		} else {
+			panic("unreachable")
+		}
+	}
+
+	panic("unreachable")
+}
+
+// parseRange is main parsing method of this parser
 func (s *Stage) parseRange(start, end int) error {
 	pivot, op := findHighestPrecedenceOperatorInRange(s.nodes, start, end)
 	if op == nil {
-		return &ErrInvalidToken{}
+		return s.parseKeywords(start, end)
 	}
 
 	s.Println("parseUnbracketed:", "op:", op, "at", pivot)
@@ -345,6 +513,7 @@ func (s *Stage) parseRange(start, end int) error {
 	}
 }
 
+// findBrackets is responsible for finding pair of brackets
 func (s *Stage) findBrackets() (int, int, bool, error) {
 	lastOpen := -1
 
@@ -380,7 +549,7 @@ func (s *Stage) findBrackets() (int, int, bool, error) {
 	}
 }
 
-// ParseLeaf parses leaves
+// ParseLeaf logs leaves
 func (s *Stage) ParseLeaf(token *Token) (Node, error) {
 	leaf, err := parseLeaf(token)
 	switch {
@@ -393,6 +562,7 @@ func (s *Stage) ParseLeaf(token *Token) (Node, error) {
 	}
 }
 
+// parseLeaf parses leaves
 func parseLeaf(token *Token) (Node, error) {
 	var leaf Node
 
@@ -417,6 +587,7 @@ func parseLeaf(token *Token) (Node, error) {
 	}
 }
 
+// isLeafToken checks wheter totken is an leaf
 func isLeafToken(token *Token) bool {
 	if token != nil {
 		switch token.Type {

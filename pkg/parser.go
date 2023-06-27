@@ -70,7 +70,7 @@ func getOperatorPrecedence(op string) int {
 		return 7
 	case "-":
 		return 8
-	case "*", "/":
+	case "*", "/", "%":
 		return 9
 	case "^":
 		return 10
@@ -142,7 +142,7 @@ func (p *Parser) applyError(err error) bool {
 
 	switch err {
 	case io.EOF:
-		// termina
+		// terminate
 		terminate = true
 	}
 

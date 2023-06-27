@@ -13,6 +13,8 @@ const (
 	punctuationRunes        = "()\n"
 )
 
+var keywords = []string{"if", "else", "for", "elif", "end"}
+
 // isKeywordRune checks if a given rune is a part of ASCII letter runes,
 func isKeywordRune(r rune) bool {
 	return strings.ContainsRune(asciiLetterRunes, r)
@@ -121,7 +123,7 @@ func isKeyword(code string) bool {
 // isBinaryOperator checks if the strings is a binary operator
 func isBinaryOperator(code string) bool {
 	switch code {
-	case "+", "-", "*", "/", "==", "!=", ">", "<", ">=", "<=", "&&", "||", "^", "=", "and", "or":
+	case "+", "-", "*", "/", "==", "!=", ">", "<", ">=", "<=", "&&", "||", "^", "=", "and", "or", "%":
 		return true
 	default:
 		return false

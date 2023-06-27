@@ -237,6 +237,22 @@ func TestParserWithContext(t *testing.T) {
 			exprs:  []string{"!(5 - 4 > 3 * 2 == !false)"},
 			result: NewBoolean(true),
 		},
+		{
+			exprs:  []string{"x = 10", "if (x == 10)", "isTen = true", "else isTen = false", "end", "isTen"},
+			result: NewBoolean(true),
+		},
+		{
+			exprs:  []string{"x = 10", "for (x < 25)", "x++", "end", "x"},
+			result: NewInteger(25),
+		},
+		{
+			exprs:  []string{"2%2"},
+			result: NewInteger(0),
+		},
+		{
+			exprs:  []string{"x=0", "for (x <= 100)", "x++", "x", "end", "x"},
+			result: NewInteger(101),
+		},
 	}
 
 	for _, tc := range cases {

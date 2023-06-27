@@ -210,3 +210,16 @@ func (n *FloatLiteral) LesserEqualValue(v Value) (Value, error) {
 		return nil, errInvalidTypes
 	}
 }
+
+func (n *FloatLiteral) ModValue(v Value) (Value, error) {
+	switch right := v.(type) {
+	case *FloatLiteral:
+		if right.Value == 0 {
+			return nil, errDivZero
+		}
+		res := math.Mod(n.Value, right.Value)
+		return NewFloat(res), nil
+	default:
+		return nil, errInvalidTypes
+	}
+}

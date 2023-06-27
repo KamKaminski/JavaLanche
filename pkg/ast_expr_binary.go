@@ -99,6 +99,11 @@ func (n *BinaryExpression) Eval(ctx *Javalanche) (Value, error) {
 		if left, ok := leftVal.(LesserEqualValuer); ok {
 			return left.LesserEqualValue(rightVal)
 		}
+	case "%":
+		if left, ok := leftVal.(ModValuer); ok {
+			return left.ModValue(rightVal)
+		}
+
 	}
 
 	err = fmt.Errorf("operator %q can't be used on %s", n.Op, leftVal)

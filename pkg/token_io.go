@@ -13,26 +13,7 @@ var (
 	errLexEmitNoArgs = errors.New("emit called without argument")
 )
 
-// Keywords list
-var keywords = []string{
-	"if",
-	"else",
-	"for",
-	"while",
-	"funx",
-	"return",
-	"var",
-	"true",
-	"false",
-	"int",
-	"float",
-	"bool",
-	"string",
-	"const",
-	"print",
-	"in",
-	"let",
-}
+
 
 // Tokenizer represents tokenizer
 type Tokenizer struct {

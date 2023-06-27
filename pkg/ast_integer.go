@@ -236,3 +236,17 @@ func (n *IntegerLiteral) LesserEqualValue(v Value) (Value, error) {
 		return nil, errInvalidTypes
 	}
 }
+
+// ModValue is modulo oeprator operation
+func (n *IntegerLiteral) ModValue(v Value) (Value, error) {
+	switch right := v.(type) {
+	case *IntegerLiteral:
+		if right.Value == 0 {
+			return nil, errDivZero
+		}
+		res := n.Value % right.Value
+		return NewInteger(res), nil
+	default:
+		return nil, errInvalidTypes
+	}
+}
