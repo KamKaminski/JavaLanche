@@ -22,6 +22,8 @@ func (ctx *Javalanche) GetValue(name string) (Value, error) {
 
 // EvalLine evaluates expression lines
 func (ctx *Javalanche) EvalLine(lines ...string) (Value, error) {
+	ctx.mu.Lock()
+	defer ctx.mu.Unlock()
 	if err := ctx.ParseLine(lines...); err != nil {
 		return nil, err
 	}

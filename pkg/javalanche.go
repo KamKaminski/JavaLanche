@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -17,8 +18,8 @@ var (
 type Javalanche struct {
 	Variable map[string]Value
 
-	buf bytes.Buffer
-
+	buf    bytes.Buffer
+	mu     sync.Mutex
 	lexer  *Tokenizer
 	parser *Parser
 }
