@@ -13,7 +13,7 @@ const (
 	punctuationRunes        = "()\n"
 )
 
-var keywords = []string{"if", "else", "for", "elif", "end"}
+var keywords = []string{"if", "else", "for", "elif", "end", "print"}
 
 // isKeywordRune checks if a given rune is a part of ASCII letter runes,
 func isKeywordRune(r rune) bool {

@@ -250,7 +250,15 @@ func TestParserWithContext(t *testing.T) {
 			result: NewInteger(0),
 		},
 		{
-			exprs:  []string{"x=0", "for (x <= 100)", "x++", "x", "end", "x"},
+			exprs:  []string{"x = 10", "y=5", "if (x == 10) print(x)", "else print(y)", "end", "x"},
+			result: NewInteger(10),
+		},
+		{
+			exprs:  []string{"x = 10", "print(x)", "x"},
+			result: NewInteger(10),
+		},
+		{
+			exprs:  []string{"x = 0", "for (x <= 100)", "x++", "print x", "end", "x"},
 			result: NewInteger(101),
 		},
 	}

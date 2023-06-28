@@ -260,6 +260,30 @@ func (s *Stage) parseUnbracketed() error {
 	return s.parseRange(0, len(s.nodes))
 }
 
+// parsePrintKeyword parses print keyword
+func (s *Stage) parsePrintKeyword(start, end int) error {
+	printNode := NewPrintNode(DefaultPrintHandler)
+
+	s.PrintDetails("parsePrintKeyword %v..%v", start, end)
+
+	for _, n := range s.nodes[start+1 : end] {
+		if node, ok := n.Node(); ok {
+			printNode.AppendNodes(node)
+		} else {
+			// Unexpected token
+			return &ErrInvalidToken{
+				Token:  n.Any().(*Token),
+				Reason: "unexpected",
+			}
+		}
+	}
+
+	s.replaceRange(printNode, start, end-1)
+
+	return nil
+}
+
+// parseKeywords parses keywords with correct precedence
 func (s *Stage) parseKeywords(start, end int) error {
 	lastOpen := ""
 	lastOpenIndex := -1
@@ -268,7 +292,7 @@ func (s *Stage) parseKeywords(start, end int) error {
 	for i, n := range s.nodes[start:end] {
 		if t, ok := n.Token(); ok && t.Type == Keyword {
 			switch t.Value {
-			case "if", "for":
+			case "if", "for", "print":
 				// open
 				switch {
 				case lastOpen == "":
@@ -281,6 +305,9 @@ func (s *Stage) parseKeywords(start, end int) error {
 				}
 			case "end":
 				switch {
+				case lastOpen == "print":
+					// parse print command
+					return s.parsePrintKeyword(start+lastOpenIndex, start+i)
 				case lastOpenIndex == -1:
 					// unexpected
 					return &ErrInvalidToken{
@@ -294,6 +321,9 @@ func (s *Stage) parseKeywords(start, end int) error {
 			case "elif", "else":
 				// elif and else can only come after if or elif
 				switch lastOpen {
+				case "print":
+					// parse print command
+					return s.parsePrintKeyword(start+lastOpenIndex, start+i)
 				case "if", "elif":
 					// remember and continue
 					lastOpen = t.Value
@@ -314,7 +344,13 @@ func (s *Stage) parseKeywords(start, end int) error {
 		}
 	}
 
-	return ErrMoreData
+	switch {
+	case lastOpen == "print":
+		// parse print command
+		return s.parsePrintKeyword(start+lastOpenIndex, end)
+	default:
+		return ErrMoreData
+	}
 }
 
 func (s *Stage) parseKeyword(start, end int) error {
@@ -325,6 +361,8 @@ func (s *Stage) parseKeyword(start, end int) error {
 			return s.parseIfKeyword(start, end)
 		case "for":
 			return s.parseForKeyword(start, end)
+		case "print":
+			return s.parsePrintKeyword(start, end)
 		}
 	}
 
