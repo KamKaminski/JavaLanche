@@ -1,9 +1,15 @@
-x = 10 
-x++
-x--
-x--
-x
+print("Conditional print")
+x = 12
+ if x > 11 isTrue = true  print isTrue else isTrue = false
+end
 
-y = 10
-z = y * x
-z
+print("String addition of two variables")
+x = "hello"
+y = " world"
+print x + y
+
+
+print "Modulus operator on two variables"
+x = 10
+y = 45
+print x % y

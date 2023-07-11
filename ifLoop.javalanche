@@ -1,6 +1,6 @@
 x = 10
  for (x < 25) 
- x
+ print x
  x++ 
  end
 x

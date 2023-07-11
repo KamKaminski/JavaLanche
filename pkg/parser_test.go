@@ -261,6 +261,10 @@ func TestParserWithContext(t *testing.T) {
 			exprs:  []string{"x = 0", "for (x <= 100)", "x++", "print x", "end", "x"},
 			result: NewInteger(101),
 		},
+		{
+			exprs:  []string{"x = 0", "print if (x >= 0) placeholder =\"hello\"  print(placeholder)", "end", "placeholder"},
+			result: NewString("hello"),
+		},
 	}
 
 	for _, tc := range cases {

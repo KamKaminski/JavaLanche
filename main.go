@@ -55,10 +55,37 @@ func isExit(line string) bool {
 func main() {
 	ctx := javalanche.New()
 
-	if isatty.IsTerminal(os.Stdin.Fd()) {
-		repl(ctx)
+	// Check for command line arguments.
+	if len(os.Args) > 1 {
+		filename := os.Args[1] // The second element of os.Args is the first command-line argument
+		file, err := os.Open(filename)
+		if err != nil {
+			printError(err)
+			os.Exit(1)
+		}
+		defer file.Close()
+
+		// Process the file line by line
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text()
+
+			value, err := ctx.EvalLine(line)
+			if err != nil {
+				printError(err)
+			} else if value != nil {
+				printResult(value)
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			printError(err)
+		}
 	} else {
-		replNonTTY(ctx)
+		if isatty.IsTerminal(os.Stdin.Fd()) {
+			repl(ctx)
+		} else {
+			replNonTTY(ctx)
+		}
 	}
 }
 

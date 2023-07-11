@@ -186,7 +186,7 @@ func (p *Parser) applyTimeout() {
 		// not more tokens, emit result
 		result = p.result
 	default:
-		result = ParserResult{nil, ErrMoreData}
+		result = ParserResult{nil, nil}
 	}
 
 	p.outCh <- result
